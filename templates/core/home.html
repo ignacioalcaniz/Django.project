@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}QuantEdge | Inversión asistida por IA{% endblock %}
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-text">
+        <span class="badge">Inversión asistida por IA</span>
+
+        <h1>Tomá mejores decisiones de inversión con datos, señales e inteligencia artificial.</h1>
+
+        <p>
+            QuantEdge analiza activos, tendencias, riesgo y oportunidades para ayudarte
+            a invertir con más información, más claridad y menos improvisación.
+        </p>
+
+        <div class="hero-actions">
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="btn-primary">Ir a mi dashboard</a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="btn-primary">Crear cuenta</a>
+                <a href="{% url 'login' %}" class="btn-secondary">Ingresar</a>
+            {% endif %}
+        </div>
+
+        <div class="stats">
+            <div>
+                <strong>87/100</strong>
+                <span>Score ejemplo</span>
+            </div>
+            <div>
+                <strong>IA</strong>
+                <span>Asistencia inteligente</span>
+            </div>
+            <div>
+                <strong>24/7</strong>
+                <span>Monitoreo de activos</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-card">
+        <div class="card-header">
+            <span>AAPL</span>
+            <strong>Apple Inc.</strong>
+        </div>
+
+        <div class="price">$212.35</div>
+        <div class="positive">+1.22% hoy</div>
+
+        <div class="score">
+            <span>Score QuantEdge</span>
+            <strong>87/100</strong>
+        </div>
+
+        <div class="recommendation">Recomendación: Comprar</div>
+    </div>
+</section>
+
+<section id="mercados" class="section">
+    <div class="section-title">
+        <span>Mercados</span>
+        <h2>Activos destacados</h2>
+        <p>Visualizá acciones con precio, variación, score y recomendación desde MySQL.</p>
+    </div>
+
+    <div class="assets-grid">
+        {% for activo in activos_destacados %}
+            <div class="asset-card">
+                <div class="asset-top">
+                    {% if activo.imagen %}
+                        <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}" class="asset-logo">
+                    {% else %}
+                        <div class="asset-logo-placeholder">{{ activo.simbolo|slice:":1" }}</div>
+                    {% endif %}
+                </div>
+
+                <h3>{{ activo.nombre }}</h3>
+                <span class="symbol">{{ activo.simbolo }}</span>
+
+                <p class="asset-price">{{ activo.moneda }} {{ activo.precio_actual }}</p>
+
+                {% if activo.variacion_diaria > 0 %}
+                    <p class="positive">+{{ activo.variacion_diaria }}%</p>
+                {% elif activo.variacion_diaria < 0 %}
+                    <p class="negative">{{ activo.variacion_diaria }}%</p>
+                {% else %}
+                    <p class="neutral">{{ activo.variacion_diaria }}%</p>
+                {% endif %}
+
+                <div class="asset-meta">
+                    <span>Score {{ activo.puntaje_quant }}/100</span>
+                    <span>Riesgo: {{ activo.get_riesgo_display }}</span>
+                </div>
+
+                <span class="chip buy">{{ activo.get_recomendacion_display }}</span>
+            </div>
+        {% empty %}
+            <div class="asset-card">
+                <h3>No hay activos cargados</h3>
+                <span class="symbol">ADMIN</span>
+                <p class="asset-price">Sin datos</p>
+                <p class="neutral">Agregá activos desde el panel admin para verlos acá.</p>
+                <a href="/admin/" class="mini-link">Ir al admin</a>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="ia" class="ai-section">
+    <div class="ai-content">
+        <span class="badge">Cómo ayuda la IA</span>
+        <h2>No compra por vos. Te ayuda a decidir mejor.</h2>
+        <p>
+            QuantEdge no promete ganancias mágicas ni reemplaza tu criterio.
+            La IA funciona como asistente: analiza datos, detecta patrones,
+            estima riesgo y resume señales para que tomes decisiones más informadas.
+        </p>
+    </div>
+
+    <div class="ai-steps">
+        <div>
+            <span>01</span>
+            <h3>Analiza datos</h3>
+            <p>Precio, volumen, variación, volatilidad, sector y comportamiento histórico.</p>
+        </div>
+
+        <div>
+            <span>02</span>
+            <h3>Genera señales</h3>
+            <p>Compra, mantener, observar o vender según métricas y perfil de riesgo.</p>
+        </div>
+
+        <div>
+            <span>03</span>
+            <h3>Asiste decisiones</h3>
+            <p>Te muestra oportunidades con explicación clara, no órdenes automáticas.</p>
+        </div>
+    </div>
+</section>
+
+<section class="benefits">
+    <div class="benefit">
+        <h3>Dashboard privado</h3>
+        <p>Acceso a tus activos, señales y herramientas de análisis.</p>
+    </div>
+
+    <div class="benefit">
+        <h3>Score inteligente</h3>
+        <p>Cada activo puede tener un puntaje basado en datos y riesgo.</p>
+    </div>
+
+    <div class="benefit">
+        <h3>Perfil inversor</h3>
+        <p>Recomendaciones adaptadas a perfiles conservadores, moderados o agresivos.</p>
+    </div>
+</section>
+
+<section id="planes" class="pricing">
+    <div class="section-title">
+        <span>Planes</span>
+        <h2>Una plataforma pensada para crecer</h2>
+    </div>
+
+    <div class="plans">
+        <div class="plan">
+            <h3>Free</h3>
+            <p>Ideal para explorar activos básicos.</p>
+            <strong>$0</strong>
+            <a href="{% url 'registro' %}">Empezar</a>
+        </div>
+
+        <div class="plan featured">
+            <h3>Premium</h3>
+            <p>Señales avanzadas, IA, alertas y dashboard completo.</p>
+            <strong>Próximamente</strong>
+            <a href="{% url 'registro' %}">Unirme</a>
+        </div>
+    </div>
+</section>
+
+
+
+{% endblock %}

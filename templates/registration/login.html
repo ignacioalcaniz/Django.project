@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Login | QuantEdge{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="auth-card">
+        <h1>Iniciar sesión</h1>
+        <p>Entrá a tu dashboard privado de inversión asistida por IA.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Ingresar a QuantEdge</button>
+        </form>
+
+        <div class="auth-link">
+            <span>¿No tenés cuenta?</span>
+            <a href="{% url 'registro' %}">Crear cuenta</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div class="qe-admin-brand">
+    <span class="qe-admin-logo">Q</span>
+    <div>
+        <h1 id="site-name">
+            <a href="{% url 'admin:index' %}">QuantEdge Admin</a>
+        </h1>
+        <p>Panel de inteligencia bursátil</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block nav-global %}
+<div class="qe-admin-links">
+    <a href="/">Volver al sitio</a>
+    <a href="/usuarios/dashboard/">Dashboard</a>
+</div>
+{% endblock %}

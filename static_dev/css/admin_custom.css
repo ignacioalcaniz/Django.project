@@ -1,0 +1,47 @@
+#header {
+    background: #020617 !important;
+    color: #f8fafc !important;
+}
+
+#branding h1 {
+    color: #38bdf8 !important;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background: #0f172a !important;
+}
+
+.button,
+input[type=submit],
+input[type=button],
+.submit-row input,
+a.button {
+    background: #22c55e !important;
+    border-radius: 10px !important;
+    border: none !important;
+}
+
+.button:hover,
+input[type=submit]:hover,
+a.button:hover {
+    opacity: .9;
+}
+
+div.breadcrumbs {
+    background: #111827 !important;
+}
+
+body {
+    background: #020617 !important;
+}
+
+#content {
+    background: #020617;
+}
+
+.module {
+    border-radius: 16px;
+    overflow: hidden;
+}

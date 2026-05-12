@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro | QuantEdge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .contenedor {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            color: #0f172a;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.25);
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        p {
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+        }
+        label {
+            font-weight: bold;
+        }
+        ul.errorlist {
+            color: red;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Crear cuenta en QuantEdge</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Registrarme</button>
+        </form>
+        <p><a href="/accounts/login/">Ya tengo cuenta</a></p>
+    </div>
+</body>
+</html>

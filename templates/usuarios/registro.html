@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Registro | QuantEdge{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="auth-card">
+        <h1>Crear cuenta</h1>
+        <p>Registrate para acceder al dashboard privado, compras simuladas y asesoramiento IA.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Crear mi cuenta</button>
+        </form>
+
+        <div class="auth-link">
+            <span>¿Ya tenés cuenta?</span>
+            <a href="{% url 'login' %}">Iniciar sesión</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

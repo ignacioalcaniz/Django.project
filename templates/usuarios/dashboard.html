@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | QuantEdge{% endblock %}
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="dashboard">
+
+    <section class="welcome">
+        <div>
+            <span class="badge">Dashboard privado</span>
+            <h1>Hola, {{ usuario.username }}</h1>
+            <p>Gestioná tus activos, compras simuladas y asesoramientos de IA.</p>
+        </div>
+
+        {% if request.user.is_staff %}
+            <div class="admin-card">
+                <strong>Modo administrador</strong>
+                <span>Tenés acceso al panel de administración.</span>
+                <a href="/admin/">Ir al admin</a>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="summary-grid">
+        <div class="summary-card">
+            <span>Total invertido simulado</span>
+            <strong>USD {{ total_invertido }}</strong>
+        </div>
+
+        <div class="summary-card">
+            <span>Operaciones simuladas</span>
+            <strong>{{ cantidad_inversiones }}</strong>
+        </div>
+
+        <div class="summary-card">
+            <span>Consultas IA</span>
+            <strong>{{ cantidad_consultas }}</strong>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="section-title">
+            <span>Mercado</span>
+            <h2>Activos disponibles</h2>
+            <p>Comprá acciones de forma simulada o pedí asesoramiento IA.</p>
+        </div>
+
+        <div class="assets-grid">
+            {% for activo in activos %}
+                <article class="asset-card">
+                    <div class="asset-header">
+                        {% if activo.imagen %}
+                            <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}">
+                        {% else %}
+                            <div class="logo-placeholder">{{ activo.simbolo|slice:":1" }}</div>
+                        {% endif %}
+
+                        <div>
+                            <h3>{{ activo.nombre }}</h3>
+                            <span>{{ activo.simbolo }} · {{ activo.bolsa }}</span>
+                        </div>
+                    </div>
+
+                    <div class="asset-price">{{ activo.moneda }} {{ activo.precio_actual }}</div>
+
+                    {% if activo.variacion_diaria > 0 %}
+                        <div class="positive">+{{ activo.variacion_diaria }}%</div>
+                    {% elif activo.variacion_diaria < 0 %}
+                        <div class="negative">{{ activo.variacion_diaria }}%</div>
+                    {% else %}
+                        <div class="neutral">{{ activo.variacion_diaria }}%</div>
+                    {% endif %}
+
+                    <div class="asset-info">
+                        <span>Score {{ activo.puntaje_quant }}/100</span>
+                        <span>Riesgo {{ activo.get_riesgo_display }}</span>
+                        <span>{{ activo.get_recomendacion_display }}</span>
+                    </div>
+
+                    <form method="post" action="{% url 'comprar_activo' activo.id %}" class="buy-form">
+                        {% csrf_token %}
+                        <input type="number" name="cantidad" min="1" value="1">
+                        <button type="submit">Comprar simulado</button>
+                    </form>
+
+                    <form method="post" action="{% url 'asesorar_activo' activo.id %}" class="ai-form">
+                        {% csrf_token %}
+                        <input type="text" name="pregunta" placeholder="Ej: ¿Conviene comprar hoy?">
+                        <button type="submit">Pedir asesoramiento IA</button>
+                    </form>
+                </article>
+            {% empty %}
+                <div class="empty">
+                    <h3>No hay activos cargados</h3>
+                    <p>Agregá activos desde el panel admin.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="two-columns">
+        <div class="panel">
+            <div class="section-title left">
+                <span>Portfolio</span>
+                <h2>Mis compras simuladas</h2>
+            </div>
+
+            {% if inversiones %}
+                <div class="table">
+                    {% for inversion in inversiones %}
+                        <div class="row">
+                            <span>{{ inversion.activo.simbolo }}</span>
+                            <span>{{ inversion.cantidad }} acción/es</span>
+                            <span>USD {{ inversion.precio_compra }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted">Todavía no hiciste compras simuladas.</p>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <div class="section-title left">
+                <span>IA</span>
+                <h2>Últimos asesoramientos</h2>
+            </div>
+
+            {% if consultas %}
+                <div class="ia-list">
+                    {% for consulta in consultas %}
+                        <div class="ia-item">
+                            <strong>{{ consulta.activo.simbolo }}</strong>
+                            <p>{{ consulta.respuesta }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted">Todavía no pediste asesoramientos IA.</p>
+            {% endif %}
+        </div>
+    </section>
+
+</main>
+
+{% endblock %}

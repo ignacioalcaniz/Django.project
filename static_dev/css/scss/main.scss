@@ -1,0 +1,26 @@
+$qe-blue: #38bdf8;
+$qe-green: #22c55e;
+$qe-dark: #020617;
+$qe-card: #111827;
+
+@mixin soft-card {
+    background: $qe-card;
+    border: 1px solid #1e293b;
+    border-radius: 18px;
+}
+
+.qe-sass-badge {
+    @include soft-card;
+    color: $qe-blue;
+    padding: 0.75rem 1rem;
+
+    strong {
+        color: $qe-green;
+    }
+}
+
+.bootstrap-sass-proof {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
