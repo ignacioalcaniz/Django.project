@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quant_filters %}
+
+{% block title %}Análisis IA | QuantEdge{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/analisis_ia.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="ai-analysis-page">
+
+    <section class="ai-analysis-hero">
+        <div>
+            <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+
+            <span class="badge">QuantEdge IA</span>
+
+            <h1>Análisis inteligente de {{ consulta.activo.nombre }}</h1>
+
+            <p>
+                Resultado generado a partir del activo seleccionado, su score,
+                nivel de riesgo, recomendación y tu perfil inversor.
+            </p>
+        </div>
+
+        <div class="ai-status-card">
+            <span>Activo analizado</span>
+            <strong>{{ consulta.activo.simbolo }}</strong>
+            <p>{{ consulta.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </div>
+    </section>
+
+    <section class="ai-analysis-grid">
+
+        <div class="ai-main-panel">
+
+            <div class="ai-score-grid">
+                <div class="ai-mini-card">
+                    <span>Score QuantEdge</span>
+                    <strong>{{ consulta.activo.puntaje_quant }}/100</strong>
+                    <p>{{ consulta.activo.puntaje_quant|score_label }}</p>
+                </div>
+
+                <div class="ai-mini-card">
+                    <span>Riesgo</span>
+                    <strong>{{ consulta.activo.riesgo|risk_label }}</strong>
+                    <p>{{ consulta.activo.get_riesgo_display }}</p>
+                </div>
+
+                <div class="ai-mini-card">
+                    <span>Recomendación</span>
+                    <strong>{{ consulta.activo.recomendacion|recommendation_label }}</strong>
+                    <p>Confianza: {{ consulta.activo.confianza_modelo }}%</p>
+                </div>
+            </div>
+
+            <div class="ai-card">
+                <h2>Pregunta del usuario</h2>
+
+                {% if consulta.pregunta %}
+                    <p>{{ consulta.pregunta }}</p>
+                {% else %}
+                    <p>Consulta general sobre el activo.</p>
+                {% endif %}
+            </div>
+
+            <div class="ai-card response-card">
+                <h2>Respuesta QuantEdge IA</h2>
+                <p>{{ consulta.respuesta }}</p>
+            </div>
+
+            <div class="ai-warning">
+                <strong>Aviso importante</strong>
+                <p>
+                    Este análisis es informativo y no constituye asesoramiento financiero profesional.
+                    Toda inversión implica riesgo y debe evaluarse según el perfil de cada usuario.
+                </p>
+            </div>
+
+        </div>
+
+        <aside class="ai-side-panel">
+
+            <div class="side-card">
+                <h3>Datos del activo</h3>
+
+                <div class="side-row">
+                    <span>Precio actual</span>
+                    <strong>{{ consulta.activo.moneda }} {{ consulta.activo.precio_actual }}</strong>
+                </div>
+
+                <div class="side-row">
+                    <span>Variación diaria</span>
+                    <strong class="{% if consulta.activo.variacion_diaria > 0 %}positive{% elif consulta.activo.variacion_diaria < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ consulta.activo.variacion_diaria|percentage }}
+                    </strong>
+                </div>
+
+                <div class="side-row">
+                    <span>Sector</span>
+                    <strong>{{ consulta.activo.sector }}</strong>
+                </div>
+
+                <div class="side-row">
+                    <span>Bolsa</span>
+                    <strong>{{ consulta.activo.bolsa }}</strong>
+                </div>
+            </div>
+
+            <div class="side-card">
+                <h3>Acciones rápidas</h3>
+
+                <a href="{% url 'activo_detalle' consulta.activo.id %}" class="side-button blue">
+                    Ver activo completo
+                </a>
+
+                <a href="{% url 'historial_ia' %}" class="side-button blue-outline">
+                    Ver historial IA
+                </a>
+
+                <form method="post" action="{% url 'asesorar_activo' consulta.activo.id %}">
+                    {% csrf_token %}
+                    <input type="text" name="pregunta" placeholder="Hacer nueva pregunta">
+                    <button type="submit" class="side-button green">
+                        Generar nuevo análisis
+                    </button>
+                </form>
+
+                <a href="{% url 'dashboard' %}" class="side-button dark">
+                    Ir al dashboard
+                </a>
+            </div>
+
+        </aside>
+
+    </section>
+
+</main>
+
+{% endblock %}

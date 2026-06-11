@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Contacto | QuantEdge{% endblock %}
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/contacto.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="contact-page">
+
+    <div class="contact-hero">
+        <span class="badge">Contacto</span>
+        <h1>Hablemos sobre inversión inteligente.</h1>
+        <p>
+            Consultas técnicas, interés en planes premium o preguntas sobre la plataforma.
+            Nuestro equipo puede ayudarte a entender mejor cómo usar QuantEdge.
+        </p>
+    </div>
+
+    <div class="contact-layout">
+
+        <div class="contact-info">
+            <div class="info-card">
+                <h3>Soporte técnico</h3>
+                <p>Problemas de acceso, dashboard, compras simuladas o funcionamiento general.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Planes premium</h3>
+                <p>Consultas comerciales sobre señales avanzadas, IA y herramientas profesionales.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Asesoramiento IA</h3>
+                <p>Preguntas sobre análisis, señales, score QuantEdge y perfil de inversión.</p>
+            </div>
+        </div>
+
+        <div class="contact-form-card">
+            <h2>Enviar consulta</h2>
+            <p>Completá el formulario y guardaremos tu solicitud en nuestro sistema.</p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Nombre</label>
+                    {{ form.nombre }}
+                    {{ form.nombre.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría</label>
+                    {{ form.categoria }}
+                    {{ form.categoria.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Asunto</label>
+                    {{ form.asunto }}
+                    {{ form.asunto.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Mensaje</label>
+                    {{ form.mensaje }}
+                    {{ form.mensaje.errors }}
+                </div>
+
+                <div class="form-group captcha-box">
+                    <label>Verificación</label>
+                    {{ form.captcha }}
+                    {{ form.captcha.errors }}
+                </div>
+
+                <button type="submit">Enviar consulta</button>
+            </form>
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -8,6 +8,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("usuarios/", include("usuarios.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("contacto/", include("contacto.urls")),
+    path("captcha/", include("captcha.urls")),
+    path("", include("vistaprevia.urls")),
 ]
 
 if settings.DEBUG:

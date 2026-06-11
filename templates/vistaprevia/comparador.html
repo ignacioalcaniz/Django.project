@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quant_filters %}
+
+{% block title %}Comparador de activos | QuantEdge{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/comparador.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="compare-page">
+
+    <section class="compare-hero">
+        <div>
+            <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+            <span class="badge">Comparador QuantEdge</span>
+            <h1>Compará activos antes de tomar una decisión</h1>
+            <p>
+                Elegí dos activos y evaluá precio, score, riesgo, recomendación,
+                variaciones, valuación y métricas clave.
+            </p>
+        </div>
+    </section>
+
+    <section class="compare-selector">
+        <form method="get" class="compare-form">
+
+            <div>
+                <label>Primer activo</label>
+                <select name="activo_1">
+                    <option value="">Seleccionar activo</option>
+                    {% for activo in activos %}
+                        <option value="{{ activo.id }}" {% if activo_1 and activo_1.id == activo.id %}selected{% endif %}>
+                            {{ activo.simbolo }} — {{ activo.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Segundo activo</label>
+                <select name="activo_2">
+                    <option value="">Seleccionar activo</option>
+                    {% for activo in activos %}
+                        <option value="{{ activo.id }}" {% if activo_2 and activo_2.id == activo.id %}selected{% endif %}>
+                            {{ activo.simbolo }} — {{ activo.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Comparar activos</button>
+        </form>
+    </section>
+
+    {% if activo_1 and activo_2 %}
+
+        <section class="compare-summary">
+
+            <article class="compare-asset-card">
+                <div class="asset-head">
+                    {% if activo_1.imagen %}
+                        <img src="{{ activo_1.imagen.url }}" alt="{{ activo_1.nombre }}">
+                    {% else %}
+                        <div class="asset-letter">{{ activo_1.simbolo|slice:":1" }}</div>
+                    {% endif %}
+
+                    <div>
+                        <h2>{{ activo_1.simbolo }}</h2>
+                        <p>{{ activo_1.nombre }}</p>
+                    </div>
+                </div>
+
+                <strong>{{ activo_1.moneda }} {{ activo_1.precio_actual }}</strong>
+                <span>{{ activo_1.recomendacion|recommendation_label }}</span>
+            </article>
+
+            <div class="versus">VS</div>
+
+            <article class="compare-asset-card">
+                <div class="asset-head">
+                    {% if activo_2.imagen %}
+                        <img src="{{ activo_2.imagen.url }}" alt="{{ activo_2.nombre }}">
+                    {% else %}
+                        <div class="asset-letter">{{ activo_2.simbolo|slice:":1" }}</div>
+                    {% endif %}
+
+                    <div>
+                        <h2>{{ activo_2.simbolo }}</h2>
+                        <p>{{ activo_2.nombre }}</p>
+                    </div>
+                </div>
+
+                <strong>{{ activo_2.moneda }} {{ activo_2.precio_actual }}</strong>
+                <span>{{ activo_2.recomendacion|recommendation_label }}</span>
+            </article>
+
+        </section>
+
+        <section class="compare-table-card">
+            <h2>Comparación de métricas</h2>
+
+            <div class="compare-table">
+
+                <div class="compare-row header">
+                    <span>Métrica</span>
+                    <strong>{{ activo_1.simbolo }}</strong>
+                    <strong>{{ activo_2.simbolo }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Precio actual</span>
+                    <strong>{{ activo_1.moneda }} {{ activo_1.precio_actual }}</strong>
+                    <strong>{{ activo_2.moneda }} {{ activo_2.precio_actual }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Score QuantEdge</span>
+                    <strong>{{ activo_1.puntaje_quant }}/100 — {{ activo_1.puntaje_quant|score_label }}</strong>
+                    <strong>{{ activo_2.puntaje_quant }}/100 — {{ activo_2.puntaje_quant|score_label }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Riesgo</span>
+                    <strong>{{ activo_1.riesgo|risk_label }}</strong>
+                    <strong>{{ activo_2.riesgo|risk_label }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Recomendación</span>
+                    <strong>{{ activo_1.recomendacion|recommendation_label }}</strong>
+                    <strong>{{ activo_2.recomendacion|recommendation_label }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Variación diaria</span>
+                    <strong class="{% if activo_1.variacion_diaria > 0 %}positive{% elif activo_1.variacion_diaria < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_1.variacion_diaria|percentage }}
+                    </strong>
+                    <strong class="{% if activo_2.variacion_diaria > 0 %}positive{% elif activo_2.variacion_diaria < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_2.variacion_diaria|percentage }}
+                    </strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Variación semanal</span>
+                    <strong class="{% if activo_1.variacion_semanal > 0 %}positive{% elif activo_1.variacion_semanal < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_1.variacion_semanal|percentage }}
+                    </strong>
+                    <strong class="{% if activo_2.variacion_semanal > 0 %}positive{% elif activo_2.variacion_semanal < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_2.variacion_semanal|percentage }}
+                    </strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Variación mensual</span>
+                    <strong class="{% if activo_1.variacion_mensual > 0 %}positive{% elif activo_1.variacion_mensual < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_1.variacion_mensual|percentage }}
+                    </strong>
+                    <strong class="{% if activo_2.variacion_mensual > 0 %}positive{% elif activo_2.variacion_mensual < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ activo_2.variacion_mensual|percentage }}
+                    </strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>P/E Ratio</span>
+                    <strong>{{ activo_1.pe_ratio }}</strong>
+                    <strong>{{ activo_2.pe_ratio }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>EPS</span>
+                    <strong>{{ activo_1.eps }}</strong>
+                    <strong>{{ activo_2.eps }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Beta</span>
+                    <strong>{{ activo_1.beta }}</strong>
+                    <strong>{{ activo_2.beta }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Dividendo</span>
+                    <strong>{{ activo_1.dividendo }}%</strong>
+                    <strong>{{ activo_2.dividendo }}%</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Capitalización</span>
+                    <strong>{{ activo_1.capitalizacion_mercado|money }}</strong>
+                    <strong>{{ activo_2.capitalizacion_mercado|money }}</strong>
+                </div>
+
+                <div class="compare-row">
+                    <span>Sector</span>
+                    <strong>{{ activo_1.sector }}</strong>
+                    <strong>{{ activo_2.sector }}</strong>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="compare-actions">
+            <a href="{% url 'activo_detalle' activo_1.id %}">Ver {{ activo_1.simbolo }}</a>
+            <a href="{% url 'activo_detalle' activo_2.id %}">Ver {{ activo_2.simbolo }}</a>
+        </section>
+
+    {% else %}
+
+        <section class="empty-compare">
+            <h2>Seleccioná dos activos para comparar</h2>
+            <p>Cuando elijas ambos activos, QuantEdge generará una comparación lado a lado.</p>
+        </section>
+
+    {% endif %}
+
+</main>
+
+{% endblock %}

@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'vistaprevia.apps.VistapreviaConfig',
     'usuarios.apps.UsuariosConfig',
     'core.apps.CoreConfig',
+    'captcha',
+'contacto.apps.ContactoConfig',
 ]
 
 MIDDLEWARE = [

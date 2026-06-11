@@ -1,0 +1,246 @@
+.ai-analysis-page {
+    padding: 54px;
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, .14), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(34, 197, 94, .10), transparent 32%),
+        #020617;
+}
+
+.back-link {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 900;
+    display: inline-block;
+    margin-bottom: 22px;
+}
+
+.ai-analysis-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 32px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, .14);
+    color: #22c55e;
+    font-weight: 900;
+    margin-bottom: 14px;
+}
+
+.ai-analysis-hero h1 {
+    margin: 0;
+    font-size: 44px;
+    max-width: 850px;
+}
+
+.ai-analysis-hero p {
+    color: #cbd5e1;
+    line-height: 1.6;
+    max-width: 780px;
+}
+
+.ai-status-card,
+.ai-mini-card,
+.ai-card,
+.side-card,
+.ai-warning {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 22px;
+    padding: 24px;
+}
+
+.ai-status-card {
+    min-width: 280px;
+    height: fit-content;
+}
+
+.ai-status-card span,
+.ai-mini-card span,
+.side-row span {
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.ai-status-card strong {
+    display: block;
+    font-size: 38px;
+    color: #38bdf8;
+    margin: 10px 0;
+}
+
+.ai-status-card p {
+    color: #94a3b8;
+    margin: 0;
+}
+
+.ai-analysis-grid {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 28px;
+}
+
+.ai-main-panel,
+.ai-side-panel {
+    display: grid;
+    gap: 22px;
+}
+
+.ai-score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.ai-mini-card strong {
+    display: block;
+    margin: 10px 0;
+    color: #38bdf8;
+    font-size: 24px;
+}
+
+.ai-mini-card p {
+    color: #cbd5e1;
+    margin: 0;
+}
+
+.ai-card h2,
+.side-card h3 {
+    margin-top: 0;
+    color: #38bdf8;
+}
+
+.ai-card p {
+    color: #cbd5e1;
+    line-height: 1.75;
+    font-size: 16px;
+}
+
+.response-card {
+    border-color: rgba(34, 197, 94, .35);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, .24);
+}
+
+.ai-warning {
+    background: rgba(250, 204, 21, .08);
+    border-color: rgba(250, 204, 21, .25);
+}
+
+.ai-warning strong {
+    color: #facc15;
+}
+
+.ai-warning p {
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.side-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.side-row strong {
+    color: #f8fafc;
+    text-align: right;
+}
+
+.positive {
+    color: #22c55e !important;
+}
+
+.negative {
+    color: #ef4444 !important;
+}
+
+.neutral {
+    color: #94a3b8 !important;
+}
+
+.side-card form {
+    display: grid;
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.side-card input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #020617;
+    color: #f8fafc;
+}
+
+.side-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 13px;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.side-button.blue {
+    background: #38bdf8;
+    color: #020617;
+}
+
+.side-button.green {
+    background: #22c55e;
+    color: #020617;
+}
+
+.side-button.dark {
+    background: #020617;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+@media (max-width: 1000px) {
+    .ai-analysis-page {
+        padding: 34px 24px;
+    }
+
+    .ai-analysis-hero,
+    .ai-analysis-grid,
+    .ai-score-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .ai-status-card {
+        min-width: auto;
+    }
+
+    .ai-analysis-hero h1 {
+        font-size: 34px;
+    }
+}
+.side-button.blue-outline {
+    background: rgba(56, 189, 248, .12);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, .35);
+
+}
+.side-card .side-button {
+    margin-bottom: 12px;
+}
+
+.side-card form {
+    margin-top: 12px;
+}
+
+.side-card .side-button:last-child {
+    margin-bottom: 0;
+}

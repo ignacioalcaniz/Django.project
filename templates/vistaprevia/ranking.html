@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quant_filters %}
+
+{% block title %}Ranking QuantEdge{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ranking.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="ranking-page">
+
+    <section class="ranking-hero">
+        <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+        <span class="badge">Ranking QuantEdge</span>
+        <h1>Top oportunidades según score, riesgo y confianza</h1>
+        <p>Una vista ordenada de los activos mejor posicionados dentro de la plataforma.</p>
+    </section>
+
+    <section class="ranking-list">
+        {% for activo in activos %}
+            <article class="ranking-card">
+                <div class="rank-number">#{{ forloop.counter }}</div>
+
+                <div class="rank-main">
+                    <h2>{{ activo.simbolo }}</h2>
+                    <p>{{ activo.nombre }}</p>
+                    <span>{{ activo.sector }} · {{ activo.bolsa }}</span>
+                </div>
+
+                <div class="rank-metric">
+                    <span>Precio</span>
+                    <strong>{{ activo.moneda }} {{ activo.precio_actual }}</strong>
+                </div>
+
+                <div class="rank-metric">
+                    <span>Score</span>
+                    <strong>{{ activo.puntaje_quant }}/100</strong>
+                    <small>{{ activo.puntaje_quant|score_label }}</small>
+                </div>
+
+                <div class="rank-metric">
+                    <span>Riesgo</span>
+                    <strong>{{ activo.riesgo|risk_label }}</strong>
+                </div>
+
+                <div class="rank-metric">
+                    <span>Recomendación</span>
+                    <strong>{{ activo.recomendacion|recommendation_label }}</strong>
+                </div>
+
+                <a href="{% url 'activo_detalle' activo.id %}" class="rank-button">
+                    Ver activo
+                </a>
+            </article>
+        {% empty %}
+            <div class="empty-ranking">
+                <h2>No hay activos cargados</h2>
+                <p>Agregá activos desde el panel admin.</p>
+            </div>
+        {% endfor %}
+    </section>
+
+</main>
+
+{% endblock %}

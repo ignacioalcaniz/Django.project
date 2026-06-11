@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quant_filters %}
+
+{% block title %}{{ activo.simbolo }} | QuantEdge{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/activo_detalle.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="asset-detail-page">
+
+    <section class="asset-hero">
+        <div>
+            <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+
+            <div class="asset-title-row">
+                {% if activo.imagen %}
+                    <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}">
+                {% else %}
+                    <div class="asset-letter">{{ activo.simbolo|slice:":1" }}</div>
+                {% endif %}
+
+                <div>
+                    <span class="badge">{{ activo.get_tipo_activo_display }}</span>
+                    <h1>{{ activo.nombre }}</h1>
+                    <p>{{ activo.simbolo }} · {{ activo.bolsa }} · {{ activo.pais }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-card">
+            <span>Precio actual</span>
+            <strong>{{ activo.moneda }} {{ activo.precio_actual }}</strong>
+            <p class="{% if activo.variacion_diaria > 0 %}positive{% elif activo.variacion_diaria < 0 %}negative{% else %}neutral{% endif %}">
+                {{ activo.variacion_diaria|percentage }} hoy
+            </p>
+        </div>
+    </section>
+
+    <section class="detail-grid">
+
+        <div class="main-panel">
+            <div class="score-box">
+                <div>
+                    <span>Score QuantEdge</span>
+                    <strong>{{ activo.puntaje_quant }}/100</strong>
+                    <p>{{ activo.puntaje_quant|score_label }}</p>
+                </div>
+
+                <div>
+                    <span>Riesgo</span>
+                    <strong>{{ activo.riesgo|risk_label }}</strong>
+                    <p>Perfil sugerido: {{ activo.get_riesgo_display }}</p>
+                </div>
+
+                <div>
+                    <span>Recomendación</span>
+                    <strong>{{ activo.recomendacion|recommendation_label }}</strong>
+                    <p>Confianza modelo: {{ activo.confianza_modelo }}%</p>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <h2>Descripción</h2>
+                <p>{{ activo.descripcion }}</p>
+            </div>
+
+            <div class="content-card">
+                <h2>Tesis de inversión</h2>
+                <p>{{ activo.tesis_inversion|default:"Sin tesis cargada." }}</p>
+            </div>
+
+            <div class="content-card">
+                <h2>Nota del analista</h2>
+                <p>{{ activo.nota_analista|default:"Sin nota cargada." }}</p>
+            </div>
+        </div>
+
+        <aside class="side-panel">
+            <div class="action-card">
+                <h3>Operar activo</h3>
+                <p>Guardá este activo, realizá una compra simulada o pedí análisis IA personalizado.</p>
+
+                {% if request.user.is_authenticated %}
+
+                    <form method="post" action="{% url 'alternar_favorito' activo.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+
+                        {% if es_favorito %}
+                            <button type="submit" class="watchlist-btn remove">
+                                Quitar de watchlist
+                            </button>
+                        {% else %}
+                            <button type="submit" class="watchlist-btn">
+                                Agregar a watchlist
+                            </button>
+                        {% endif %}
+                    </form>
+
+                    <form method="post" action="{% url 'comprar_activo' activo.id %}">
+                        {% csrf_token %}
+                        <input type="number" name="cantidad" value="1" min="1">
+                        <button type="submit" class="buy-btn">Comprar simulado</button>
+                    </form>
+
+                    <form method="post" action="{% url 'asesorar_activo' activo.id %}">
+                        {% csrf_token %}
+                        <input type="text" name="pregunta" placeholder="¿Conviene comprar hoy?">
+                        <button type="submit" class="ai-btn">Analizar con IA</button>
+                    </form>
+
+                {% else %}
+                    <a href="{% url 'login' %}" class="login-action">Iniciar sesión</a>
+                {% endif %}
+            </div>
+
+            <div class="metrics-card">
+                <h3>Métricas clave</h3>
+
+                {% for nombre, valor in metricas %}
+                    <div class="metric-row">
+                        <span>{{ nombre }}</span>
+                        <strong>{{ valor|money }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="metrics-card">
+                <h3>Rango de precios</h3>
+
+                <div class="metric-row">
+                    <span>Apertura</span>
+                    <strong>{{ activo.moneda }} {{ activo.apertura }}</strong>
+                </div>
+
+                <div class="metric-row">
+                    <span>Cierre anterior</span>
+                    <strong>{{ activo.moneda }} {{ activo.cierre_anterior }}</strong>
+                </div>
+
+                <div class="metric-row">
+                    <span>Máximo día</span>
+                    <strong>{{ activo.moneda }} {{ activo.maximo_dia }}</strong>
+                </div>
+
+                <div class="metric-row">
+                    <span>Mínimo día</span>
+                    <strong>{{ activo.moneda }} {{ activo.minimo_dia }}</strong>
+                </div>
+
+                <div class="metric-row">
+                    <span>Máximo 52 semanas</span>
+                    <strong>{{ activo.moneda }} {{ activo.maximo_52_semanas }}</strong>
+                </div>
+
+                <div class="metric-row">
+                    <span>Mínimo 52 semanas</span>
+                    <strong>{{ activo.moneda }} {{ activo.minimo_52_semanas }}</strong>
+                </div>
+            </div>
+        </aside>
+
+    </section>
+
+</main>
+
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Mis análisis IA | QuantEdge
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/historial_ia.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="history-page">
+
+    <section class="history-header">
+
+        <div>
+            <span class="badge">
+                QuantEdge IA
+            </span>
+
+            <h1>
+                Historial de análisis
+            </h1>
+
+            <p>
+                Todas las consultas realizadas por la inteligencia artificial.
+            </p>
+        </div>
+
+        <a href="{% url 'dashboard' %}" class="back-button">
+            Volver al dashboard
+        </a>
+
+    </section>
+
+    <section class="history-list">
+
+        {% if consultas %}
+
+            {% for consulta in consultas %}
+
+                <article class="history-card">
+
+                    <div class="history-top">
+
+                        <div>
+                            <h3>
+                                {{ consulta.activo.nombre }}
+                            </h3>
+
+                            <span>
+                                {{ consulta.activo.simbolo }}
+                            </span>
+                        </div>
+
+                        <span class="date">
+                            {{ consulta.fecha_creacion|date:"d/m/Y H:i" }}
+                        </span>
+
+                    </div>
+
+                    <div class="question">
+
+                        <strong>
+                            Pregunta
+                        </strong>
+
+                        <p>
+                            {% if consulta.pregunta %}
+                                {{ consulta.pregunta }}
+                            {% else %}
+                                Consulta general del activo.
+                            {% endif %}
+                        </p>
+
+                    </div>
+
+                    <a
+                        href="{% url 'detalle_analisis' consulta.id %}"
+                        class="view-analysis"
+                    >
+                        Ver análisis completo
+                    </a>
+
+                </article>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-card">
+
+                <h2>
+                    Todavía no tenés análisis
+                </h2>
+
+                <p>
+                    Generá tu primer análisis desde el dashboard.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+{% endblock %}

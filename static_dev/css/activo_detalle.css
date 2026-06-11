@@ -1,0 +1,252 @@
+.asset-detail-page {
+    padding: 54px;
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, .12), transparent 35%),
+        #020617;
+}
+
+.back-link {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 900;
+    display: inline-block;
+    margin-bottom: 22px;
+}
+
+.asset-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 32px;
+}
+
+.asset-title-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.asset-title-row img,
+.asset-letter {
+    width: 82px;
+    height: 82px;
+    border-radius: 22px;
+}
+
+.asset-title-row img {
+    object-fit: cover;
+    background: white;
+}
+
+.asset-letter {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    color: #020617;
+    font-size: 34px;
+    font-weight: 900;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, .14);
+    color: #22c55e;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.asset-title-row h1 {
+    margin: 0;
+    font-size: 44px;
+}
+
+.asset-title-row p {
+    color: #94a3b8;
+    margin: 8px 0 0;
+}
+
+.price-card,
+.content-card,
+.action-card,
+.metrics-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 22px;
+    padding: 24px;
+}
+
+.price-card {
+    min-width: 310px;
+}
+
+.price-card span {
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.price-card strong {
+    display: block;
+    font-size: 36px;
+    margin: 10px 0;
+    color: #f8fafc;
+}
+
+.positive {
+    color: #22c55e;
+    font-weight: 900;
+}
+
+.negative {
+    color: #ef4444;
+    font-weight: 900;
+}
+
+.neutral {
+    color: #94a3b8;
+    font-weight: 900;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1.25fr .75fr;
+    gap: 28px;
+}
+
+.main-panel,
+.side-panel {
+    display: grid;
+    gap: 22px;
+}
+
+.score-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.score-box div {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.score-box span {
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.score-box strong {
+    display: block;
+    color: #38bdf8;
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.score-box p {
+    color: #cbd5e1;
+    margin: 0;
+}
+
+.content-card h2,
+.action-card h3,
+.metrics-card h3 {
+    margin-top: 0;
+    color: #38bdf8;
+}
+
+.content-card p,
+.action-card p {
+    color: #cbd5e1;
+    line-height: 1.65;
+}
+
+.action-card form {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.action-card input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #020617;
+    color: #f8fafc;
+}
+
+.action-card button,
+.login-action {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+.buy-btn {
+    background: #22c55e;
+    color: #020617;
+}
+
+.ai-btn {
+    background: #38bdf8;
+    color: #020617;
+}
+
+.login-action {
+    display: block;
+    background: #22c55e;
+    color: #020617;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.metric-row span {
+    color: #94a3b8;
+}
+
+.metric-row strong {
+    color: #f8fafc;
+    text-align: right;
+}
+
+@media (max-width: 1000px) {
+    .asset-detail-page {
+        padding: 34px 24px;
+    }
+
+    .asset-hero,
+    .detail-grid,
+    .score-box {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .price-card {
+        min-width: auto;
+    }
+}
+.watchlist-btn {
+    background: rgba(250, 204, 21, .15);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, .35);
+}
+
+.watchlist-btn.remove {
+    background: rgba(239, 68, 68, .12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, .35);
+}

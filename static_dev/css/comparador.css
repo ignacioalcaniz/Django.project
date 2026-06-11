@@ -1,0 +1,245 @@
+.compare-page {
+    padding: 54px;
+    background:
+        radial-gradient(circle at top right, rgba(56,189,248,.12), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(34,197,94,.08), transparent 30%),
+        #020617;
+}
+
+.back-link {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 900;
+    display: inline-block;
+    margin-bottom: 22px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(34,197,94,.14);
+    color: #22c55e;
+    font-weight: 900;
+    margin-bottom: 14px;
+}
+
+.compare-hero h1 {
+    margin: 0;
+    font-size: 44px;
+    max-width: 900px;
+}
+
+.compare-hero p {
+    color: #cbd5e1;
+    max-width: 800px;
+    line-height: 1.6;
+}
+
+.compare-selector,
+.compare-table-card,
+.empty-compare {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 22px;
+    padding: 24px;
+    margin-top: 28px;
+}
+
+.compare-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 18px;
+    align-items: end;
+}
+
+.compare-form label {
+    display: block;
+    color: #cbd5e1;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.compare-form select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #020617;
+    color: #f8fafc;
+}
+
+.compare-form button {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 12px;
+    background: #22c55e;
+    color: #020617;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.compare-summary {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr;
+    gap: 22px;
+    align-items: center;
+    margin-top: 28px;
+}
+
+.compare-asset-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 22px;
+    padding: 24px;
+}
+
+.asset-head {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.asset-head img,
+.asset-letter {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+}
+
+.asset-head img {
+    object-fit: cover;
+    background: white;
+}
+
+.asset-letter {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    color: #020617;
+    font-weight: 900;
+    font-size: 24px;
+}
+
+.asset-head h2 {
+    margin: 0;
+}
+
+.asset-head p {
+    color: #94a3b8;
+    margin: 4px 0 0;
+}
+
+.compare-asset-card > strong {
+    display: block;
+    margin-top: 22px;
+    font-size: 30px;
+}
+
+.compare-asset-card > span {
+    display: inline-block;
+    margin-top: 10px;
+    color: #22c55e;
+    font-weight: 900;
+}
+
+.versus {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    color: #020617;
+    font-weight: 900;
+    margin: auto;
+}
+
+.compare-table-card h2 {
+    margin-top: 0;
+    color: #38bdf8;
+}
+
+.compare-table {
+    display: grid;
+    gap: 8px;
+}
+
+.compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #020617;
+    border: 1px solid #1e293b;
+}
+
+.compare-row.header {
+    background: rgba(56,189,248,.12);
+}
+
+.compare-row span {
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.compare-row strong {
+    color: #f8fafc;
+}
+
+.positive {
+    color: #22c55e !important;
+}
+
+.negative {
+    color: #ef4444 !important;
+}
+
+.neutral {
+    color: #94a3b8 !important;
+}
+
+.compare-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.compare-actions a {
+    text-decoration: none;
+    background: #38bdf8;
+    color: #020617;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 900;
+}
+
+.empty-compare h2 {
+    margin-top: 0;
+}
+
+.empty-compare p {
+    color: #94a3b8;
+}
+
+@media (max-width: 1000px) {
+    .compare-page {
+        padding: 34px 22px;
+    }
+
+    .compare-form,
+    .compare-summary,
+    .compare-row {
+        grid-template-columns: 1fr;
+    }
+
+    .versus {
+        width: 54px;
+        height: 54px;
+    }
+
+    .compare-hero h1 {
+        font-size: 34px;
+    }
+}

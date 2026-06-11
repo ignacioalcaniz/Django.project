@@ -16,7 +16,7 @@
         <div>
             <span class="badge">Dashboard privado</span>
             <h1>Hola, {{ usuario.username }}</h1>
-            <p>Gestioná tus activos, compras simuladas y asesoramientos de IA.</p>
+            <p>Gestioná tus activos, compras simuladas, watchlist y asesoramientos de IA.</p>
         </div>
 
         {% if request.user.is_staff %}
@@ -43,13 +43,79 @@
             <span>Consultas IA</span>
             <strong>{{ cantidad_consultas }}</strong>
         </div>
+
+        <div class="summary-card">
+            <span>Activos en watchlist</span>
+            <strong>{{ cantidad_favoritos }}</strong>
+        </div>
+    </section>
+
+    <section class="panel watchlist-panel">
+        <div class="section-title left">
+            <span>Watchlist</span>
+            <h2>Mis activos favoritos</h2>
+            <p>Seguimiento rápido de los activos que te interesan.</p>
+        </div>
+
+        {% if favoritos %}
+            <div class="watchlist-grid">
+                {% for favorito in favoritos %}
+                    <article class="watch-card">
+                        <div class="watch-top">
+                            {% if favorito.activo.imagen %}
+                                <img src="{{ favorito.activo.imagen.url }}" alt="{{ favorito.activo.nombre }}">
+                            {% else %}
+                                <div class="watch-logo">{{ favorito.activo.simbolo|slice:":1" }}</div>
+                            {% endif %}
+
+                            <div>
+                                <h3>{{ favorito.activo.simbolo }}</h3>
+                                <span>{{ favorito.activo.nombre }}</span>
+                            </div>
+                        </div>
+
+                        <div class="watch-price">
+                            {{ favorito.activo.moneda }} {{ favorito.activo.precio_actual }}
+                        </div>
+
+                        {% if favorito.activo.variacion_diaria > 0 %}
+                            <div class="positive">+{{ favorito.activo.variacion_diaria }}%</div>
+                        {% elif favorito.activo.variacion_diaria < 0 %}
+                            <div class="negative">{{ favorito.activo.variacion_diaria }}%</div>
+                        {% else %}
+                            <div class="neutral">{{ favorito.activo.variacion_diaria }}%</div>
+                        {% endif %}
+
+                        <div class="watch-meta">
+                            <span>Score {{ favorito.activo.puntaje_quant }}/100</span>
+                            <span>{{ favorito.activo.get_recomendacion_display }}</span>
+                        </div>
+
+                        <div class="watch-actions">
+                            <a href="{% url 'activo_detalle' favorito.activo.id %}">Ver activo</a>
+
+                            <form method="post" action="{% url 'alternar_favorito' favorito.activo.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit">Quitar</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-watchlist">
+                <h3>Todavía no tenés activos favoritos</h3>
+                <p>Entrá al detalle de un activo y agregalo a tu watchlist para seguirlo desde acá.</p>
+            </div>
+        {% endif %}
     </section>
 
     <section class="panel">
         <div class="section-title">
             <span>Mercado</span>
             <h2>Activos disponibles</h2>
-            <p>Comprá acciones de forma simulada o pedí asesoramiento IA.</p>
+            <p>Comprá acciones de forma simulada, pedí asesoramiento IA o guardá activos en tu watchlist.</p>
         </div>
 
         <div class="assets-grid">
@@ -84,6 +150,10 @@
                         <span>{{ activo.get_recomendacion_display }}</span>
                     </div>
 
+                    <a href="{% url 'activo_detalle' activo.id %}" class="detail-link">
+                        Ver análisis completo
+                    </a>
+
                     <form method="post" action="{% url 'comprar_activo' activo.id %}" class="buy-form">
                         {% csrf_token %}
                         <input type="number" name="cantidad" min="1" value="1">
@@ -105,47 +175,111 @@
         </div>
     </section>
 
-    <section class="two-columns">
-        <div class="panel">
-            <div class="section-title left">
-                <span>Portfolio</span>
-                <h2>Mis compras simuladas</h2>
-            </div>
-
-            {% if inversiones %}
-                <div class="table">
-                    {% for inversion in inversiones %}
-                        <div class="row">
-                            <span>{{ inversion.activo.simbolo }}</span>
-                            <span>{{ inversion.cantidad }} acción/es</span>
-                            <span>USD {{ inversion.precio_compra }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="muted">Todavía no hiciste compras simuladas.</p>
-            {% endif %}
+    <section class="panel portfolio-panel">
+        <div class="section-title left">
+            <span>Portfolio</span>
+            <h2>Mis compras simuladas</h2>
+            <p>Seguimiento de rendimiento estimado según el precio actual de cada activo.</p>
         </div>
 
-        <div class="panel">
-            <div class="section-title left">
-                <span>IA</span>
-                <h2>Últimos asesoramientos</h2>
-            </div>
+        {% if inversiones %}
+            <div class="portfolio-grid">
+                {% for inversion in inversiones %}
+                    <article class="portfolio-card">
+                        <div class="portfolio-top">
+                            <div>
+                                <h3>{{ inversion.activo.simbolo }}</h3>
+                                <span>{{ inversion.activo.nombre }}</span>
+                            </div>
 
-            {% if consultas %}
-                <div class="ia-list">
-                    {% for consulta in consultas %}
-                        <div class="ia-item">
-                            <strong>{{ consulta.activo.simbolo }}</strong>
-                            <p>{{ consulta.respuesta }}</p>
+                            {% if inversion.resultado_es_positivo %}
+                                <strong class="portfolio-badge positive-bg">Ganancia</strong>
+                            {% else %}
+                                <strong class="portfolio-badge negative-bg">Pérdida</strong>
+                            {% endif %}
                         </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="muted">Todavía no pediste asesoramientos IA.</p>
-            {% endif %}
+
+                        <div class="portfolio-numbers">
+                            <div>
+                                <span>Cantidad</span>
+                                <strong>{{ inversion.cantidad }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Precio compra</span>
+                                <strong>USD {{ inversion.precio_compra }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Precio actual</span>
+                                <strong>USD {{ inversion.activo.precio_actual }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Total invertido</span>
+                                <strong>USD {{ inversion.total_invertido }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Valor actual</span>
+                                <strong>USD {{ inversion.valor_actual }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Resultado</span>
+                                {% if inversion.resultado_es_positivo %}
+                                    <strong class="positive">+USD {{ inversion.ganancia_perdida }}</strong>
+                                {% else %}
+                                    <strong class="negative">USD {{ inversion.ganancia_perdida }}</strong>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="portfolio-return">
+                            <span>Rentabilidad estimada</span>
+
+                            {% if inversion.resultado_es_positivo %}
+                                <strong class="positive">+{{ inversion.rentabilidad_porcentual|floatformat:2 }}%</strong>
+                            {% else %}
+                                <strong class="negative">{{ inversion.rentabilidad_porcentual|floatformat:2 }}%</strong>
+                            {% endif %}
+                        </div>
+
+                        <a href="{% url 'activo_detalle' inversion.activo.id %}" class="detail-link">
+                            Ver activo
+                        </a>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted">Todavía no hiciste compras simuladas.</p>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="section-title left">
+            <span>IA</span>
+            <h2>Últimos asesoramientos</h2>
+            <a href="{% url 'historial_ia' %}" class="mini-detail-link">
+                Ver historial completo →
+            </a>
         </div>
+
+        {% if consultas %}
+            <div class="ia-list">
+                {% for consulta in consultas %}
+                    <div class="ia-item">
+                        <strong>{{ consulta.activo.simbolo }}</strong>
+                        <p>{{ consulta.respuesta }}</p>
+                        <a href="{% url 'detalle_analisis' consulta.id %}" class="mini-detail-link">
+                            Ver análisis
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted">Todavía no pediste asesoramientos IA.</p>
+        {% endif %}
     </section>
 
 </main>

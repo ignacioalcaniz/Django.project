@@ -1,5 +1,30 @@
 from django.contrib import admin
-from .models import InversionSimulada, ConsultaIA
+from .models import PerfilUsuario, InversionSimulada, ConsultaIA
+from .models import PerfilUsuario, InversionSimulada, ConsultaIA, ActivoFavorito
+
+@admin.register(PerfilUsuario)
+class PerfilUsuarioAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "nombre_completo",
+        "perfil_inversor",
+        "capital_demo",
+        "pais",
+        "fecha_actualizacion",
+    )
+    search_fields = (
+        "usuario__username",
+        "usuario__email",
+        "nombre_completo",
+        "pais",
+    )
+    list_filter = (
+        "perfil_inversor",
+        "pais",
+        "fecha_actualizacion",
+    )
+    ordering = ("usuario__username",)
 
 
 @admin.register(InversionSimulada)
@@ -56,3 +81,10 @@ class ConsultaIAAdmin(admin.ModelAdmin):
     )
     ordering = ("-fecha_creacion",)
     list_per_page = 20
+
+@admin.register(ActivoFavorito)
+class ActivoFavoritoAdmin(admin.ModelAdmin):
+    list_display = ("id", "usuario", "activo", "fecha_agregado")
+    search_fields = ("usuario__username", "usuario__email", "activo__nombre", "activo__simbolo")
+    list_filter = ("fecha_agregado", "activo")
+    ordering = ("-fecha_agregado",)    

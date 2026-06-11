@@ -317,3 +317,242 @@
         width: 100%;
     }
 }
+.detail-link {
+    display: block;
+    text-align: center;
+    margin: 14px 0;
+    padding: 11px;
+    border-radius: 12px;
+    background: rgba(56, 189, 248, .14);
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 900;
+}
+.mini-detail-link {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 900;
+    text-align: right;
+}
+.watchlist-panel {
+    border-color: rgba(250, 204, 21, .22);
+}
+
+.watchlist-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.watch-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.watch-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.watch-top img,
+.watch-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+}
+
+.watch-top img {
+    object-fit: cover;
+    background: white;
+}
+
+.watch-logo {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    color: #020617;
+    font-weight: 900;
+    font-size: 20px;
+}
+
+.watch-top h3 {
+    margin: 0;
+    color: #f8fafc;
+}
+
+.watch-top span {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.watch-price {
+    margin-top: 18px;
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.watch-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.watch-meta span {
+    background: #020617;
+    border: 1px solid #1e293b;
+    color: #cbd5e1;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.watch-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.watch-actions a,
+.watch-actions button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.watch-actions a {
+    background: rgba(56, 189, 248, .14);
+    color: #38bdf8;
+    text-decoration: none;
+}
+
+.watch-actions button {
+    border: none;
+    background: rgba(239, 68, 68, .13);
+    color: #ef4444;
+}
+
+.empty-watchlist {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 18px;
+    padding: 24px;
+}
+
+.empty-watchlist h3 {
+    margin-top: 0;
+}
+
+.empty-watchlist p {
+    color: #94a3b8;
+}
+
+@media (max-width: 1000px) {
+    .watchlist-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.portfolio-panel {
+    border-color: rgba(34, 197, 94, .22);
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.portfolio-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 22px;
+}
+
+.portfolio-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.portfolio-top h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 24px;
+}
+
+.portfolio-top span {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.portfolio-badge {
+    padding: 7px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+.positive-bg {
+    background: rgba(34, 197, 94, .14);
+    color: #22c55e;
+}
+
+.negative-bg {
+    background: rgba(239, 68, 68, .14);
+    color: #ef4444;
+}
+
+.portfolio-numbers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.portfolio-numbers div {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.portfolio-numbers span,
+.portfolio-return span {
+    display: block;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 7px;
+}
+
+.portfolio-numbers strong {
+    color: #f8fafc;
+}
+
+.portfolio-return {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: #020617;
+    border: 1px solid #1e293b;
+}
+
+.portfolio-return strong {
+    font-size: 28px;
+}
+
+@media (max-width: 1000px) {
+    .portfolio-grid,
+    .portfolio-numbers {
+        grid-template-columns: 1fr;
+    }
+}
