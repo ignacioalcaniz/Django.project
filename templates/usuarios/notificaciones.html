@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notificaciones | QuantEdge{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notificaciones.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<main class="notifications-page">
+
+    <section class="notifications-header">
+        <div>
+            <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+            <span class="badge">Centro de actividad</span>
+            <h1>Notificaciones</h1>
+            <p>Revisá las novedades importantes de tu cuenta QuantEdge.</p>
+        </div>
+
+        {% if notificaciones %}
+            <form method="post" action="{% url 'marcar_notificaciones_leidas' %}">
+                {% csrf_token %}
+                <button type="submit" class="mark-read-btn">
+                    Marcar todas como leídas
+                </button>
+            </form>
+        {% endif %}
+    </section>
+
+    {% if notificaciones %}
+
+        <section class="notifications-list">
+
+            {% for n in notificaciones %}
+
+                <article class="notification-card {% if not n.leida %}unread{% endif %}">
+                    <div class="notification-icon">
+                        {% if n.tipo == "compra" %}
+                            📈
+                        {% elif n.tipo == "favorito" %}
+                            ⭐
+                        {% elif n.tipo == "ia" %}
+                            🤖
+                        {% elif n.tipo == "perfil" %}
+                            👤
+                        {% else %}
+                            🔔
+                        {% endif %}
+                    </div>
+
+                    <div class="notification-content">
+                        <div class="notification-top">
+                            <h3>{{ n.titulo }}</h3>
+
+                            {% if not n.leida %}
+                                <span class="unread-badge">Nueva</span>
+                            {% endif %}
+                        </div>
+
+                        <p>{{ n.mensaje }}</p>
+
+                        <span class="notification-date">
+                            {{ n.fecha_creacion|date:"d/m/Y H:i" }}
+                        </span>
+                    </div>
+                </article>
+
+            {% endfor %}
+
+        </section>
+
+    {% else %}
+
+        <section class="empty-notifications">
+            <h2>No tenés notificaciones todavía</h2>
+            <p>
+                Cuando hagas compras simuladas, agregues activos a favoritos
+                o generes análisis IA, aparecerán acá.
+            </p>
+        </section>
+
+    {% endif %}
+
+</main>
+
+{% endblock %}

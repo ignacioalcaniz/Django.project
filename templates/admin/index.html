@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+
+<div class="qe-admin-dashboard">
+
+    <div class="qe-admin-hero">
+        <div>
+            <span>QuantEdge Control Center</span>
+            <h1>Panel operativo</h1>
+            <p>Gestión centralizada de activos, usuarios, IA, inversiones y actividad interna.</p>
+        </div>
+    </div>
+
+    <div class="qe-admin-metrics">
+        <div class="qe-admin-metric-card">
+            <span>Usuarios</span>
+            <strong>{{ admin_total_usuarios|default:"0" }}</strong>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>Activos</span>
+            <strong>{{ admin_total_activos|default:"0" }}</strong>
+            <small>{{ admin_activos_activos|default:"0" }} activos operativos</small>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>Inversiones</span>
+            <strong>{{ admin_total_inversiones|default:"0" }}</strong>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>Consultas IA</span>
+            <strong>{{ admin_total_consultas_ia|default:"0" }}</strong>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>Watchlist</span>
+            <strong>{{ admin_total_favoritos|default:"0" }}</strong>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>No leídas</span>
+            <strong>{{ admin_notificaciones_no_leidas|default:"0" }}</strong>
+        </div>
+
+        <div class="qe-admin-metric-card">
+            <span>Contactos</span>
+            <strong>{{ admin_total_contactos|default:"0" }}</strong>
+        </div>
+    </div>
+
+</div>
+
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+
 from .models import Producto
 
 
@@ -26,11 +27,8 @@ class ProductoAdmin(admin.ModelAdmin):
         "destacado_coloreado",
     )
 
-    list_display_links = (
-        "id",
-        "simbolo_badge",
-        "nombre",
-    )
+    list_display_links = ("id", "simbolo_badge", "nombre")
+    list_editable = ("precio_actual",)
 
     search_fields = (
         "nombre",
@@ -61,18 +59,29 @@ class ProductoAdmin(admin.ModelAdmin):
         "fecha_ultima_revision",
     )
 
-    ordering = ("nombre",)
-    list_per_page = 12
-    # date_hierarchy = "fecha_creacion"
+    ordering = ("-puntaje_quant", "nombre")
+    list_per_page = 15
     save_on_top = True
     empty_value_display = "Sin dato"
-
-    list_editable = ("precio_actual",)
 
     readonly_fields = (
         "preview_imagen",
         "fecha_creacion",
         "fecha_actualizacion",
+    )
+
+    actions = (
+        "marcar_como_destacados",
+        "quitar_destacados",
+        "activar_activos",
+        "desactivar_activos",
+        "recomendar_comprar",
+        "recomendar_mantener",
+        "recomendar_observar",
+        "recomendar_vender",
+        "riesgo_bajo",
+        "riesgo_medio",
+        "riesgo_alto",
     )
 
     fieldsets = (
@@ -151,23 +160,73 @@ class ProductoAdmin(admin.ModelAdmin):
         }),
     )
 
+    @admin.action(description="Marcar seleccionados como destacados")
+    def marcar_como_destacados(self, request, queryset):
+        updated = queryset.update(es_destacado=True)
+        self.message_user(request, f"{updated} activo/s marcado/s como destacados.")
+
+    @admin.action(description="Quitar destacados")
+    def quitar_destacados(self, request, queryset):
+        updated = queryset.update(es_destacado=False)
+        self.message_user(request, f"{updated} activo/s dejaron de estar destacados.")
+
+    @admin.action(description="Activar activos")
+    def activar_activos(self, request, queryset):
+        updated = queryset.update(activo=True)
+        self.message_user(request, f"{updated} activo/s activado/s.")
+
+    @admin.action(description="Desactivar activos")
+    def desactivar_activos(self, request, queryset):
+        updated = queryset.update(activo=False)
+        self.message_user(request, f"{updated} activo/s desactivado/s.")
+
+    @admin.action(description="Cambiar recomendación a Comprar")
+    def recomendar_comprar(self, request, queryset):
+        updated = queryset.update(recomendacion="comprar")
+        self.message_user(request, f"{updated} activo/s actualizado/s a Comprar.")
+
+    @admin.action(description="Cambiar recomendación a Mantener")
+    def recomendar_mantener(self, request, queryset):
+        updated = queryset.update(recomendacion="mantener")
+        self.message_user(request, f"{updated} activo/s actualizado/s a Mantener.")
+
+    @admin.action(description="Cambiar recomendación a Observar")
+    def recomendar_observar(self, request, queryset):
+        updated = queryset.update(recomendacion="observar")
+        self.message_user(request, f"{updated} activo/s actualizado/s a Observar.")
+
+    @admin.action(description="Cambiar recomendación a Vender")
+    def recomendar_vender(self, request, queryset):
+        updated = queryset.update(recomendacion="vender")
+        self.message_user(request, f"{updated} activo/s actualizado/s a Vender.")
+
+    @admin.action(description="Cambiar riesgo a Bajo")
+    def riesgo_bajo(self, request, queryset):
+        updated = queryset.update(riesgo="bajo")
+        self.message_user(request, f"{updated} activo/s actualizado/s a riesgo Bajo.")
+
+    @admin.action(description="Cambiar riesgo a Medio")
+    def riesgo_medio(self, request, queryset):
+        updated = queryset.update(riesgo="medio")
+        self.message_user(request, f"{updated} activo/s actualizado/s a riesgo Medio.")
+
+    @admin.action(description="Cambiar riesgo a Alto")
+    def riesgo_alto(self, request, queryset):
+        updated = queryset.update(riesgo="alto")
+        self.message_user(request, f"{updated} activo/s actualizado/s a riesgo Alto.")
+
     def preview_imagen(self, obj):
         if obj and obj.imagen:
             return format_html(
-                '<img src="{}" width="58" height="58" style="border-radius:12px; object-fit:cover; border:2px solid #1e293b; box-shadow: 0 4px 10px rgba(0,0,0,0.15);" />',
+                '<img src="{}" width="58" height="58" style="border-radius:12px; object-fit:cover; border:2px solid #1e293b; box-shadow:0 4px 10px rgba(0,0,0,.18);" />',
                 obj.imagen.url
             )
-        return "Sin imagen"
+        return format_html('<span class="qe-admin-muted">Sin imagen</span>')
 
     preview_imagen.short_description = "Imagen"
 
     def simbolo_badge(self, obj):
-        return format_html(
-            '<span style="background:{}; color:{}; padding:6px 10px; border-radius:999px; font-weight:700;">{}</span>',
-            "#0f172a",
-            "#f8fafc",
-            obj.simbolo
-        )
+        return format_html('<span class="qe-badge-dark">{}</span>', obj.simbolo)
 
     simbolo_badge.short_description = "Símbolo"
 
@@ -181,7 +240,7 @@ class ProductoAdmin(admin.ModelAdmin):
             "fondo": "#ec4899",
         }
         return format_html(
-            '<span style="background:{}; color:white; padding:6px 10px; border-radius:999px; font-weight:700;">{}</span>',
+            '<span style="background:{};" class="qe-badge-white">{}</span>',
             colores.get(obj.tipo_activo, "#334155"),
             obj.get_tipo_activo_display()
         )
@@ -190,50 +249,41 @@ class ProductoAdmin(admin.ModelAdmin):
 
     def variacion_coloreada(self, obj):
         valor = float(obj.variacion_diaria or 0)
+
         if valor > 0:
-            return format_html(
-                '<span style="color:{}; font-weight:800;">+{}%</span>',
-                "#16a34a",
-                f"{valor:.2f}"
-            )
-        elif valor < 0:
-            return format_html(
-                '<span style="color:{}; font-weight:800;">{}%</span>',
-                "#dc2626",
-                f"{valor:.2f}"
-            )
-        return format_html(
-            '<span style="color:{}; font-weight:800;">{}%</span>',
-            "#64748b",
-            f"{valor:.2f}"
-        )
+            return format_html('<span class="qe-positive">+{:.2f}%</span>', valor)
+
+        if valor < 0:
+            return format_html('<span class="qe-negative">{:.2f}%</span>', valor)
+
+        return format_html('<span class="qe-neutral">{:.2f}%</span>', valor)
 
     variacion_coloreada.short_description = "Variación"
 
     def riesgo_coloreado(self, obj):
-        colores = {
-            "bajo": "#16a34a",
-            "medio": "#f59e0b",
-            "alto": "#dc2626",
+        clases = {
+            "bajo": "qe-positive",
+            "medio": "qe-warning",
+            "alto": "qe-negative",
         }
         return format_html(
-            '<span style="color:{}; font-weight:800;">{}</span>',
-            colores.get(obj.riesgo, "#64748b"),
+            '<span class="{}">{}</span>',
+            clases.get(obj.riesgo, "qe-neutral"),
             obj.get_riesgo_display()
         )
 
     riesgo_coloreado.short_description = "Riesgo"
 
     def recomendacion_coloreada(self, obj):
-        colores = {
-            "comprar": "#16a34a",
-            "mantener": "#2563eb",
-            "vender": "#dc2626",
-            "observar": "#7c3aed",
+        clases = {
+            "comprar": "qe-positive",
+            "mantener": "qe-blue",
+            "vender": "qe-negative",
+            "observar": "qe-purple",
         }
         return format_html(
-            '<span style="color:{}; font-weight:800;">{}</span>',
-            colores.get(obj.recomendacion, "#64748b"),
+            '<span class="{}">{}</span>',
+            clases.get(obj.recomendacion, "qe-neutral"),
             obj.get_recomendacion_display()
         )
 
@@ -241,18 +291,17 @@ class ProductoAdmin(admin.ModelAdmin):
 
     def puntaje_quant_badge(self, obj):
         if obj.puntaje_quant >= 80:
-            color = "#16a34a"
+            clase = "qe-score-high"
         elif obj.puntaje_quant >= 60:
-            color = "#2563eb"
+            clase = "qe-score-good"
         elif obj.puntaje_quant >= 40:
-            color = "#f59e0b"
+            clase = "qe-score-mid"
         else:
-            color = "#dc2626"
+            clase = "qe-score-low"
 
         return format_html(
-            '<span style="background:{}; color:{}; padding:6px 10px; border-radius:999px; font-weight:800;">{} / 100</span>',
-            color,
-            "white",
+            '<span class="{}">{} / 100</span>',
+            clase,
             obj.puntaje_quant
         )
 
@@ -260,31 +309,15 @@ class ProductoAdmin(admin.ModelAdmin):
 
     def activo_coloreado(self, obj):
         if obj.activo:
-            return format_html(
-                '<span style="color:{}; font-weight:800;">{}</span>',
-                "#16a34a",
-                "Activo"
-            )
-        return format_html(
-            '<span style="color:{}; font-weight:800;">{}</span>',
-            "#dc2626",
-            "Inactivo"
-        )
+            return format_html('<span class="qe-positive">Activo</span>')
+        return format_html('<span class="qe-negative">Inactivo</span>')
 
     activo_coloreado.short_description = "Estado"
 
     def destacado_coloreado(self, obj):
         if obj.es_destacado:
-            return format_html(
-                '<span style="color:{}; font-weight:800;">{}</span>',
-                "#f59e0b",
-                "★ Destacado"
-            )
-        return format_html(
-            '<span style="color:{}; font-weight:700;">{}</span>',
-            "#94a3b8",
-            "Normal"
-        )
+            return format_html('<span class="qe-warning">★ Destacado</span>')
+        return format_html('<span class="qe-neutral">Normal</span>')
 
     destacado_coloreado.short_description = "Visibilidad"
 

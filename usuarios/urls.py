@@ -10,6 +10,8 @@ from .views import (
     cerrar_sesion,
     detalle_analisis,
     historial_ia,
+    notificaciones,
+    marcar_notificaciones_leidas,
 )
 
 urlpatterns = [
@@ -32,6 +34,18 @@ urlpatterns = [
         "mis-analisis/",
         historial_ia,
         name="historial_ia"
+    ),
+
+    path(
+        "notificaciones/",
+        notificaciones,
+        name="notificaciones"
+    ),
+
+    path(
+        "notificaciones/marcar-leidas/",
+        marcar_notificaciones_leidas,
+        name="marcar_notificaciones_leidas"
     ),
 
     path("logout/", cerrar_sesion, name="cerrar_sesion"),

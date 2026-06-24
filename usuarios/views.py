@@ -4,7 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import RegistroUsuarioForm, PerfilUsuarioForm
-from .models import InversionSimulada, ConsultaIA, PerfilUsuario, ActivoFavorito
+from .models import (
+    InversionSimulada,
+    ConsultaIA,
+    PerfilUsuario,
+    ActivoFavorito,
+    Notificacion,
+)
 from vistaprevia.models import Producto
 
 
@@ -17,11 +23,6 @@ def registro(request):
 
         if form.is_valid():
             user = form.save()
-
-            PerfilUsuario.objects.create(
-                usuario=user,
-                nombre_completo=f"{user.first_name} {user.last_name}".strip(),
-            )
 
             login(request, user)
             messages.success(request, "Cuenta creada correctamente. Bienvenido a QuantEdge.")
@@ -126,7 +127,10 @@ def generar_riesgos(activo):
         riesgos.append(f"P/E Ratio elevado ({activo.pe_ratio}), posible señal de valuación exigente.")
 
     if activo.recomendacion in ["vender", "observar"]:
-        riesgos.append(f"La recomendación actual es {activo.get_recomendacion_display()}, por lo que conviene actuar con prudencia.")
+        riesgos.append(
+            f"La recomendación actual es {activo.get_recomendacion_display()}, "
+            "por lo que conviene actuar con prudencia."
+        )
 
     if not riesgos:
         riesgos.append("No se detectan riesgos críticos con los datos actuales, aunque toda inversión implica incertidumbre.")
@@ -348,3 +352,30 @@ def historial_ia(request):
         "usuarios/historial_ia.html",
         {"consultas": consultas}
     )
+
+@login_required
+def notificaciones(request):
+    notificaciones_usuario = (
+        Notificacion.objects
+        .filter(usuario=request.user)
+        .order_by("-fecha_creacion")
+    )
+
+    return render(
+        request,
+        "usuarios/notificaciones.html",
+        {
+            "notificaciones": notificaciones_usuario
+        }
+    )
+
+
+@login_required
+def marcar_notificaciones_leidas(request):
+    if request.method == "POST":
+        Notificacion.objects.filter(
+            usuario=request.user,
+            leida=False
+        ).update(leida=True)
+
+    return redirect("notificaciones")
