@@ -1,4 +1,7 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 from django.utils.html import format_html
 
 from .models import Producto
@@ -82,6 +85,7 @@ class ProductoAdmin(admin.ModelAdmin):
         "riesgo_bajo",
         "riesgo_medio",
         "riesgo_alto",
+        "exportar_activos_csv",
     )
 
     fieldsets = (
@@ -214,6 +218,61 @@ class ProductoAdmin(admin.ModelAdmin):
     def riesgo_alto(self, request, queryset):
         updated = queryset.update(riesgo="alto")
         self.message_user(request, f"{updated} activo/s actualizado/s a riesgo Alto.")
+
+    @admin.action(description="Exportar activos seleccionados a CSV")
+    def exportar_activos_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="quantedge_activos.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "ID",
+            "Nombre",
+            "Símbolo",
+            "Ticker externo",
+            "Tipo",
+            "Sector",
+            "Industria",
+            "País",
+            "Bolsa",
+            "Precio actual",
+            "Moneda",
+            "Variación diaria",
+            "Variación semanal",
+            "Variación mensual",
+            "Riesgo",
+            "Recomendación",
+            "Score",
+            "Confianza modelo",
+            "Activo",
+            "Destacado",
+        ])
+
+        for activo in queryset:
+            writer.writerow([
+                activo.id,
+                activo.nombre,
+                activo.simbolo,
+                activo.ticker_externo,
+                activo.get_tipo_activo_display(),
+                activo.sector,
+                activo.industria,
+                activo.pais,
+                activo.bolsa,
+                activo.precio_actual,
+                activo.moneda,
+                activo.variacion_diaria,
+                activo.variacion_semanal,
+                activo.variacion_mensual,
+                activo.get_riesgo_display(),
+                activo.get_recomendacion_display(),
+                activo.puntaje_quant,
+                activo.confianza_modelo,
+                activo.activo,
+                activo.es_destacado,
+            ])
+
+        return response
 
     def preview_imagen(self, obj):
         if obj and obj.imagen:

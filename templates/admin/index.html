@@ -5,56 +5,171 @@
 
 <div class="qe-admin-dashboard">
 
-    <div class="qe-admin-hero">
+    <section class="qe-admin-hero">
         <div>
             <span>QuantEdge Control Center</span>
             <h1>Panel operativo</h1>
             <p>Gestión centralizada de activos, usuarios, IA, inversiones y actividad interna.</p>
         </div>
-    </div>
+    </section>
 
-    <div class="qe-admin-metrics">
-        <div class="qe-admin-metric-card">
+    <section class="qe-admin-metrics">
+        <div class="qe-admin-metric-card green">
             <span>Usuarios</span>
             <strong>{{ admin_total_usuarios|default:"0" }}</strong>
+            <small>Cuentas registradas</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card blue">
             <span>Activos</span>
             <strong>{{ admin_total_activos|default:"0" }}</strong>
             <small>{{ admin_activos_activos|default:"0" }} activos operativos</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card purple">
             <span>Inversiones</span>
             <strong>{{ admin_total_inversiones|default:"0" }}</strong>
+            <small>Operaciones simuladas</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card cyan">
             <span>Consultas IA</span>
             <strong>{{ admin_total_consultas_ia|default:"0" }}</strong>
+            <small>Análisis generados</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card yellow">
             <span>Watchlist</span>
             <strong>{{ admin_total_favoritos|default:"0" }}</strong>
+            <small>Activos favoritos</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card red">
             <span>No leídas</span>
             <strong>{{ admin_notificaciones_no_leidas|default:"0" }}</strong>
+            <small>Notificaciones pendientes</small>
         </div>
 
-        <div class="qe-admin-metric-card">
+        <div class="qe-admin-metric-card cyan">
             <span>Contactos</span>
             <strong>{{ admin_total_contactos|default:"0" }}</strong>
+            <small>{{ admin_contactos_pendientes|default:"0" }} pendientes</small>
         </div>
+    </section>
+
+    <section class="qe-admin-insights">
+
+        <article class="qe-admin-insight-card">
+            <h2>Top activos QuantEdge</h2>
+
+            {% for activo in admin_top_activos %}
+                <div class="qe-insight-row">
+                    <div>
+                        <strong>{{ activo.simbolo }}</strong>
+                        <span>{{ activo.nombre }}</span>
+                    </div>
+                    <b>{{ activo.puntaje_quant }}/100</b>
+                </div>
+            {% empty %}
+                <p class="qe-empty">No hay activos cargados.</p>
+            {% endfor %}
+        </article>
+
+        <article class="qe-admin-insight-card">
+            <h2>Últimas consultas IA</h2>
+
+            {% for consulta in admin_ultimas_consultas_ia %}
+                <div class="qe-insight-row">
+                    <div>
+                        <strong>{{ consulta.activo.simbolo }}</strong>
+                        <span>{{ consulta.usuario.username }}</span>
+                    </div>
+                    <b>{{ consulta.fecha_creacion|date:"d/m H:i" }}</b>
+                </div>
+            {% empty %}
+                <p class="qe-empty">No hay consultas IA.</p>
+            {% endfor %}
+        </article>
+
+        <article class="qe-admin-insight-card">
+            <h2>Actividad reciente</h2>
+
+            {% for log in admin_logs_recientes %}
+                <div class="qe-insight-row">
+                    <div>
+                        <strong>{{ log.user.username }}</strong>
+                        <span>{{ log.object_repr }}</span>
+                    </div>
+                    <b>{{ log.action_time|date:"d/m H:i" }}</b>
+                </div>
+            {% empty %}
+                <p class="qe-empty">No hay actividad reciente.</p>
+            {% endfor %}
+        </article>
+
+    </section>
+
+</div>
+
+<section class="qe-admin-modules">
+    <h2>Módulos disponibles</h2>
+
+    <div class="qe-admin-table">
+        {% for app in app_list %}
+            <div class="qe-admin-app-title">
+                {{ app.name }}
+            </div>
+
+            {% for model in app.models %}
+                <div class="qe-admin-row">
+                    <div>
+                        <strong>
+                            {% if model.admin_url %}
+                                <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                            {% else %}
+                                {{ model.name }}
+                            {% endif %}
+                        </strong>
+
+                        <p>
+                            {% if model.object_name == "Producto" %}
+                                Gestión de activos y datos del mercado.
+                            {% elif model.object_name == "User" %}
+                                Administrar usuarios del sistema.
+                            {% elif model.object_name == "Group" %}
+                                Administrar grupos de permisos.
+                            {% elif model.object_name == "PerfilUsuario" %}
+                                Perfiles e información adicional de usuarios.
+                            {% elif model.object_name == "InversionSimulada" %}
+                                Operaciones simuladas realizadas por usuarios.
+                            {% elif model.object_name == "ConsultaIA" %}
+                                Consultas realizadas al asistente de IA.
+                            {% elif model.object_name == "ActivoFavorito" %}
+                                Activos guardados en watchlist.
+                            {% elif model.object_name == "Notificacion" %}
+                                Notificaciones automáticas del sistema.
+                            {% elif model.object_name == "ConsultaContacto" %}
+                                Consultas recibidas desde el formulario de contacto.
+                            {% else %}
+                                Administración del módulo.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="qe-admin-row-actions">
+                        {% if model.add_url %}
+                            <a href="{{ model.add_url }}" class="qe-action-add">＋ Agregar</a>
+                        {% endif %}
+
+                        {% if model.admin_url %}
+                            <a href="{{ model.admin_url }}" class="qe-action-view">👁 Ver</a>
+                            <a href="{{ model.admin_url }}" class="qe-action-edit">✎ Modificar</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
     </div>
-
-</div>
-
-<div id="content-main">
-    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
-</div>
+</section>
 
 {% endblock %}

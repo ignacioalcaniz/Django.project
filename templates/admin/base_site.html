@@ -13,16 +13,25 @@
         <h1 id="site-name">
             <a href="{% url 'admin:index' %}">QuantEdge Admin</a>
         </h1>
-        <p>Panel de inteligencia bursátil</p>
+        <p>Control Center · Inteligencia bursátil</p>
     </div>
+</div>
+{% endblock %}
+
+{% block usertools %}
+<div class="qe-user-tools">
+    <span>Bienvenido/a, <strong>{{ user.username }}</strong></span>
+    <a href="/">Ver sitio</a>
+    <a href="{% url 'admin:password_change' %}">Cambiar contraseña</a>
+    <a href="{% url 'admin:logout' %}">Cerrar sesión</a>
 </div>
 {% endblock %}
 
 {% block nav-global %}
 <div class="qe-admin-links">
-    <a href="/">Volver al sitio</a>
     <a href="/usuarios/dashboard/">Dashboard</a>
     <a href="/ranking/">Ranking</a>
     <a href="/comparador/">Comparador</a>
+    <a href="/">Volver al sitio</a>
 </div>
 {% endblock %}

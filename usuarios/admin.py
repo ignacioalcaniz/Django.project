@@ -1,4 +1,7 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 from django.utils.html import format_html
 
 from .models import (
@@ -78,6 +81,44 @@ class InversionSimuladaAdmin(admin.ModelAdmin):
     ordering = ("-fecha_compra",)
     list_per_page = 20
     readonly_fields = ("fecha_compra",)
+    actions = ("exportar_inversiones_csv",)
+
+    @admin.action(description="Exportar inversiones seleccionadas a CSV")
+    def exportar_inversiones_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="quantedge_inversiones.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "ID",
+            "Usuario",
+            "Activo",
+            "Cantidad",
+            "Precio compra",
+            "Total invertido",
+            "Valor actual",
+            "Resultado",
+            "Rentabilidad %",
+            "Activa",
+            "Fecha",
+        ])
+
+        for inversion in queryset:
+            writer.writerow([
+                inversion.id,
+                inversion.usuario.username,
+                inversion.activo.simbolo,
+                inversion.cantidad,
+                inversion.precio_compra,
+                inversion.total_invertido(),
+                inversion.valor_actual(),
+                inversion.ganancia_perdida(),
+                inversion.rentabilidad_porcentual(),
+                inversion.activa,
+                inversion.fecha_compra,
+            ])
+
+        return response
 
     def total_invertido_admin(self, obj):
         return obj.total_invertido()
@@ -181,6 +222,7 @@ class NotificacionAdmin(admin.ModelAdmin):
     actions = (
         "marcar_como_leidas",
         "marcar_como_no_leidas",
+        "exportar_notificaciones_csv",
     )
 
     @admin.action(description="Marcar notificaciones como leídas")
@@ -192,6 +234,35 @@ class NotificacionAdmin(admin.ModelAdmin):
     def marcar_como_no_leidas(self, request, queryset):
         updated = queryset.update(leida=False)
         self.message_user(request, f"{updated} notificación/es marcada/s como no leídas.")
+
+    @admin.action(description="Exportar notificaciones seleccionadas a CSV")
+    def exportar_notificaciones_csv(self, request, queryset):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="quantedge_notificaciones.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "ID",
+            "Usuario",
+            "Tipo",
+            "Título",
+            "Mensaje",
+            "Leída",
+            "Fecha",
+        ])
+
+        for n in queryset:
+            writer.writerow([
+                n.id,
+                n.usuario.username,
+                n.get_tipo_display(),
+                n.titulo,
+                n.mensaje,
+                n.leida,
+                n.fecha_creacion,
+            ])
+
+        return response
 
     def tipo_badge(self, obj):
         colores = {
