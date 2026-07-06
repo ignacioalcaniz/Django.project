@@ -25,11 +25,7 @@
             <a href="{% url 'comparador_activos' %}">Comparador</a>
             <a href="{% url 'ranking_activos' %}">Ranking</a>
             <a href="{% url 'historial_ia' %}">Historial IA</a>
-
-            <a href="{% url 'notificaciones' %}" class="notification-link">
-                🔔
-            </a>
-
+            <a href="{% url 'notificaciones' %}" class="notification-link">🔔</a>
             <a href="{% url 'home' %}">Inicio público</a>
             <a href="{% url 'contacto' %}">Contacto</a>
 
@@ -99,6 +95,8 @@
     <p>© 2026 QuantEdge — Inversión asistida por datos e inteligencia artificial.</p>
     <span>Desarrollado por Ignacio Alcañiz</span>
 </footer>
+
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>

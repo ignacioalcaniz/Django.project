@@ -12,6 +12,11 @@
 
 <main class="dashboard">
 
+    {{ portfolio_labels|json_script:"portfolioLabelsData" }}
+    {{ portfolio_valores|json_script:"portfolioValuesData" }}
+    {{ portfolio_rentabilidades|json_script:"portfolioReturnsData" }}
+    {{ portfolio_scores|json_script:"portfolioScoresData" }}
+
     <section class="welcome">
         <div>
             <span class="badge">Dashboard privado</span>
@@ -28,10 +33,113 @@
         {% endif %}
     </section>
 
+    <section class="portfolio-executive">
+        <div class="portfolio-executive-main">
+            <span>Portfolio inteligente</span>
+            <h2>Resumen ejecutivo de tu cuenta</h2>
+            <p>
+                Seguimiento consolidado de capital invertido, valor actual,
+                rendimiento estimado, riesgo y calidad promedio del portfolio.
+            </p>
+        </div>
+
+        <div class="portfolio-executive-grid">
+            <div class="executive-card">
+                <span>Total invertido</span>
+                <strong>USD {{ total_invertido|floatformat:2 }}</strong>
+            </div>
+
+            <div class="executive-card">
+                <span>Valor actual</span>
+                <strong>USD {{ valor_actual_total|floatformat:2 }}</strong>
+            </div>
+
+            <div class="executive-card">
+                <span>Resultado total</span>
+                {% if ganancia_total >= 0 %}
+                    <strong class="positive">+USD {{ ganancia_total|floatformat:2 }}</strong>
+                {% else %}
+                    <strong class="negative">USD {{ ganancia_total|floatformat:2 }}</strong>
+                {% endif %}
+            </div>
+
+            <div class="executive-card">
+                <span>Rentabilidad total</span>
+                {% if rentabilidad_total >= 0 %}
+                    <strong class="positive">+{{ rentabilidad_total|floatformat:2 }}%</strong>
+                {% else %}
+                    <strong class="negative">{{ rentabilidad_total|floatformat:2 }}%</strong>
+                {% endif %}
+            </div>
+
+            <div class="executive-card">
+                <span>Score promedio</span>
+                <strong>{{ score_promedio|floatformat:1 }}/100</strong>
+            </div>
+
+            <div class="executive-card">
+                <span>Riesgo promedio</span>
+                <strong>{{ riesgo_promedio }}</strong>
+            </div>
+        </div>
+
+        {% if activo_mas_rentable %}
+            <div class="best-asset-card">
+                <span>Activo más rentable</span>
+                <strong>{{ activo_mas_rentable.activo.simbolo }}</strong>
+                <p>
+                    {{ activo_mas_rentable.activo.nombre }} ·
+                    {{ activo_mas_rentable.rentabilidad_porcentual|floatformat:2 }}%
+                </p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="panel charts-panel">
+        <div class="section-title left">
+            <span>Portfolio Analytics</span>
+            <h2>Visualización del rendimiento</h2>
+            <p>Distribución del portfolio, rentabilidad por operación y score de los activos comprados.</p>
+        </div>
+
+        {% if inversiones %}
+            <div class="charts-grid">
+                <article class="chart-card">
+                    <h3>Distribución por valor actual</h3>
+                    <p>Cuánto representa cada activo dentro del portfolio.</p>
+                    <div class="chart-box">
+                        <canvas id="portfolioDistributionChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="chart-card">
+                    <h3>Rentabilidad por activo</h3>
+                    <p>Ganancia o pérdida porcentual estimada por operación.</p>
+                    <div class="chart-box">
+                        <canvas id="portfolioReturnsChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="chart-card wide">
+                    <h3>Score QuantEdge por activo</h3>
+                    <p>Comparación del puntaje interno de calidad/riesgo de cada activo adquirido.</p>
+                    <div class="chart-box wide-box">
+                        <canvas id="portfolioScoresChart"></canvas>
+                    </div>
+                </article>
+            </div>
+        {% else %}
+            <div class="empty">
+                <h3>No hay datos suficientes para gráficos</h3>
+                <p>Realizá una compra simulada para activar Portfolio Analytics.</p>
+            </div>
+        {% endif %}
+    </section>
+
     <section class="summary-grid">
         <div class="summary-card">
             <span>Total invertido simulado</span>
-            <strong>USD {{ total_invertido }}</strong>
+            <strong>USD {{ total_invertido|floatformat:2 }}</strong>
         </div>
 
         <div class="summary-card">
@@ -111,16 +219,46 @@
         {% endif %}
     </section>
 
-    <section class="panel">
+    <section class="panel market-panel">
         <div class="section-title">
             <span>Mercado</span>
             <h2>Activos disponibles</h2>
-            <p>Comprá acciones de forma simulada, pedí asesoramiento IA o guardá activos en tu watchlist.</p>
+            <p>Filtrá activos por recomendación, riesgo o buscá por nombre y símbolo sin recargar la página.</p>
+        </div>
+
+        <div class="market-toolbar">
+            <div class="market-search">
+                <label for="assetSearchInput">Buscar activo</label>
+                <input
+                    type="text"
+                    id="assetSearchInput"
+                    placeholder="Ej: Apple, Tesla, NVDA..."
+                >
+            </div>
+
+            <div class="market-filters">
+                <button type="button" class="market-filter-btn active" data-filter-type="all" data-filter-value="all">Todos</button>
+                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="comprar">Comprar</button>
+                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="mantener">Mantener</button>
+                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="observar">Observar</button>
+                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="vender">Vender</button>
+                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="bajo">Riesgo bajo</button>
+                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="medio">Riesgo medio</button>
+                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="alto">Riesgo alto</button>
+            </div>
+
+            <p class="market-results-counter">0 activo/s encontrados</p>
         </div>
 
         <div class="assets-grid">
             {% for activo in activos %}
-                <article class="asset-card">
+                <article
+                    class="asset-card"
+                    data-recommendation="{{ activo.recomendacion }}"
+                    data-risk="{{ activo.riesgo }}"
+                    data-symbol="{{ activo.simbolo }}"
+                    data-name="{{ activo.nombre }}"
+                >
                     <div class="asset-header">
                         {% if activo.imagen %}
                             <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}">
@@ -284,4 +422,10 @@
 
 </main>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}?v=20"></script>
 {% endblock %}

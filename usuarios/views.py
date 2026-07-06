@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -23,7 +25,6 @@ def registro(request):
 
         if form.is_valid():
             user = form.save()
-
             login(request, user)
             messages.success(request, "Cuenta creada correctamente. Bienvenido a QuantEdge.")
             return redirect("dashboard")
@@ -156,35 +157,104 @@ def generar_respuesta_ia(activo, perfil_inversor="moderado", pregunta=""):
         f"Sector: {activo.sector or 'Sin sector cargado'}\n"
         f"Bolsa: {activo.bolsa or 'Sin bolsa cargada'}\n"
         f"Pregunta del usuario: {pregunta_texto}\n\n"
-
         f"1. RESUMEN DEL ACTIVO\n"
         f"El activo cotiza actualmente a {activo.moneda} {activo.precio_actual}. "
         f"Su variación diaria es de {activo.variacion_diaria}%, la semanal de {activo.variacion_semanal}% "
         f"y la mensual de {activo.variacion_mensual}%. "
         f"El score QuantEdge es {activo.puntaje_quant}/100 y el riesgo asignado es {activo.get_riesgo_display()}. "
         f"{estado_mercado}\n\n"
-
         f"2. PUNTOS POSITIVOS\n"
         f"{puntos_texto}\n\n"
-
         f"3. RIESGOS A CONSIDERAR\n"
         f"{riesgos_texto}\n\n"
-
         f"4. LECTURA SEGÚN PERFIL INVERSOR\n"
         f"{lectura_perfil}\n\n"
-
         f"5. RECOMENDACIÓN INTERNA\n"
         f"{lectura_recomendacion} "
         f"La confianza del modelo es de {activo.confianza_modelo}%.\n\n"
-
         f"6. CONCLUSIÓN\n"
         f"Con los datos disponibles, {activo.nombre} debe analizarse combinando score, riesgo, tendencia reciente "
         f"y perfil del inversor. La decisión no debería basarse en un único indicador, sino en una evaluación integral "
         f"del portfolio, horizonte temporal y tolerancia al riesgo.\n\n"
-
         f"AVISO LEGAL\n"
         f"Este análisis es informativo y educativo. No constituye asesoramiento financiero profesional ni una orden de compra o venta."
     )
+
+
+def calcular_metricas_portfolio(inversiones):
+    total_invertido = sum(inversion.total_invertido() for inversion in inversiones)
+    valor_actual_total = sum(inversion.valor_actual() for inversion in inversiones)
+    ganancia_total = valor_actual_total - total_invertido
+
+    if total_invertido > 0:
+        rentabilidad_total = (ganancia_total / total_invertido) * Decimal("100")
+    else:
+        rentabilidad_total = Decimal("0.00")
+
+    cantidad_inversiones = inversiones.count()
+
+    if cantidad_inversiones > 0:
+        score_promedio = sum(inversion.activo.puntaje_quant for inversion in inversiones) / cantidad_inversiones
+    else:
+        score_promedio = 0
+
+    mapa_riesgo = {
+        "bajo": 1,
+        "medio": 2,
+        "alto": 3,
+    }
+
+    if cantidad_inversiones > 0:
+        riesgo_num = sum(mapa_riesgo.get(inversion.activo.riesgo, 2) for inversion in inversiones) / cantidad_inversiones
+    else:
+        riesgo_num = 0
+
+    if riesgo_num >= 2.6:
+        riesgo_promedio = "Alto"
+    elif riesgo_num >= 1.6:
+        riesgo_promedio = "Medio"
+    elif riesgo_num > 0:
+        riesgo_promedio = "Bajo"
+    else:
+        riesgo_promedio = "Sin datos"
+
+    activo_mas_rentable = None
+
+    if inversiones:
+        activo_mas_rentable = max(
+            inversiones,
+            key=lambda inversion: inversion.rentabilidad_porcentual()
+        )
+
+    return {
+        "total_invertido": total_invertido,
+        "valor_actual_total": valor_actual_total,
+        "ganancia_total": ganancia_total,
+        "rentabilidad_total": rentabilidad_total,
+        "score_promedio": score_promedio,
+        "riesgo_promedio": riesgo_promedio,
+        "activo_mas_rentable": activo_mas_rentable,
+    }
+
+
+def generar_datos_graficos_portfolio(inversiones):
+    labels = []
+    valores_actuales = []
+    rentabilidades = []
+    scores = []
+
+    for inversion in inversiones:
+        labels.append(inversion.activo.simbolo)
+        valores_actuales.append(float(inversion.valor_actual()))
+        rentabilidades.append(float(inversion.rentabilidad_porcentual()))
+        scores.append(float(inversion.activo.puntaje_quant))
+
+    return {
+        "portfolio_labels": labels,
+        "portfolio_valores": valores_actuales,
+        "portfolio_rentabilidades": rentabilidades,
+        "portfolio_scores": scores,
+    }
 
 
 @login_required
@@ -196,7 +266,8 @@ def dashboard(request):
     consultas = ConsultaIA.objects.filter(usuario=request.user).select_related("activo")[:5]
     favoritos = ActivoFavorito.objects.filter(usuario=request.user).select_related("activo")
 
-    total_invertido = sum(inversion.total_invertido() for inversion in inversiones)
+    metricas_portfolio = calcular_metricas_portfolio(inversiones)
+    datos_graficos = generar_datos_graficos_portfolio(inversiones)
 
     contexto = {
         "usuario": request.user,
@@ -205,7 +276,17 @@ def dashboard(request):
         "inversiones": inversiones,
         "consultas": consultas,
         "favoritos": favoritos,
-        "total_invertido": total_invertido,
+        "total_invertido": metricas_portfolio["total_invertido"],
+        "valor_actual_total": metricas_portfolio["valor_actual_total"],
+        "ganancia_total": metricas_portfolio["ganancia_total"],
+        "rentabilidad_total": metricas_portfolio["rentabilidad_total"],
+        "score_promedio": metricas_portfolio["score_promedio"],
+        "riesgo_promedio": metricas_portfolio["riesgo_promedio"],
+        "activo_mas_rentable": metricas_portfolio["activo_mas_rentable"],
+        "portfolio_labels": datos_graficos["portfolio_labels"],
+        "portfolio_valores": datos_graficos["portfolio_valores"],
+        "portfolio_rentabilidades": datos_graficos["portfolio_rentabilidades"],
+        "portfolio_scores": datos_graficos["portfolio_scores"],
         "cantidad_inversiones": inversiones.count(),
         "cantidad_consultas": consultas.count(),
         "cantidad_favoritos": favoritos.count(),
@@ -353,6 +434,7 @@ def historial_ia(request):
         {"consultas": consultas}
     )
 
+
 @login_required
 def notificaciones(request):
     notificaciones_usuario = (
@@ -364,9 +446,7 @@ def notificaciones(request):
     return render(
         request,
         "usuarios/notificaciones.html",
-        {
-            "notificaciones": notificaciones_usuario
-        }
+        {"notificaciones": notificaciones_usuario}
     )
 
 
