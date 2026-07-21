@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+    <div class="dashboard-layout">
+        {% block dashboard_header %}
+        {% endblock %}
+
+        {% block dashboard_content %}
+        {% endblock %}
+    </div>
+{% endblock %}

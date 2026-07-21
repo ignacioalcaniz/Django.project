@@ -1,0 +1,201 @@
+{% extends "admin/base_site.html" %}
+
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+ <link rel="stylesheet"
+      href="{% static 'css/actualizar_analisis.css' %}">
+    
+{% endblock %}
+
+{% block content %}
+<div class="qe-action-page">
+
+    <section class="qe-action-header">
+        <span>Acción administrativa avanzada</span>
+
+        <h1>{{ title }}</h1>
+
+        <p>
+            {{ subtitle }}
+            Los cambios se aplicarán únicamente a los activos seleccionados.
+        </p>
+    </section>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="action"
+            value="actualizar_analisis_intermedio"
+        >
+
+        {% for selected_id in selected_ids %}
+            <input
+                type="hidden"
+                name="{{ action_checkbox_name }}"
+                value="{{ selected_id }}"
+            >
+        {% endfor %}
+
+        <div class="qe-action-layout">
+
+            <section class="qe-action-card">
+                <h2>Configuración del análisis</h2>
+
+                {% if form.non_field_errors %}
+                    <div class="qe-errors">
+                        <strong>Revisá la información ingresada.</strong>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="qe-form-row">
+                    {{ form.recomendacion.label_tag }}
+                    {{ form.recomendacion }}
+
+                    {% if form.recomendacion.errors %}
+                        <div class="qe-errors">
+                            {{ form.recomendacion.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    {{ form.riesgo.label_tag }}
+                    {{ form.riesgo }}
+
+                    {% if form.riesgo.errors %}
+                        <div class="qe-errors">
+                            {{ form.riesgo.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    {{ form.puntaje_quant.label_tag }}
+                    {{ form.puntaje_quant }}
+
+                    {% if form.puntaje_quant.help_text %}
+                        <span class="qe-help">
+                            {{ form.puntaje_quant.help_text }}
+                        </span>
+                    {% endif %}
+
+                    {% if form.puntaje_quant.errors %}
+                        <div class="qe-errors">
+                            {{ form.puntaje_quant.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    {{ form.confianza_modelo.label_tag }}
+                    {{ form.confianza_modelo }}
+
+                    {% if form.confianza_modelo.help_text %}
+                        <span class="qe-help">
+                            {{ form.confianza_modelo.help_text }}
+                        </span>
+                    {% endif %}
+
+                    {% if form.confianza_modelo.errors %}
+                        <div class="qe-errors">
+                            {{ form.confianza_modelo.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    {{ form.nota_analista.label_tag }}
+                    {{ form.nota_analista }}
+
+                    {% if form.nota_analista.errors %}
+                        <div class="qe-errors">
+                            {{ form.nota_analista.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    <div class="qe-checkbox-row">
+                        {{ form.actualizar_fecha_revision }}
+                        {{ form.actualizar_fecha_revision.label_tag }}
+                    </div>
+
+                    {% if form.actualizar_fecha_revision.errors %}
+                        <div class="qe-errors">
+                            {{ form.actualizar_fecha_revision.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-form-row">
+                    <div class="qe-checkbox-row">
+                        {{ form.confirmar }}
+                        {{ form.confirmar.label_tag }}
+                    </div>
+
+                    {% if form.confirmar.errors %}
+                        <div class="qe-errors">
+                            {{ form.confirmar.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="qe-actions">
+                    <button
+                        type="submit"
+                        name="apply"
+                        value="1"
+                        class="qe-primary-btn"
+                    >
+                        Confirmar actualización
+                    </button>
+
+                    <a
+                        href="{% url 'admin:vistaprevia_producto_changelist' %}"
+                        class="qe-secondary-btn"
+                    >
+                        Cancelar
+                    </a>
+                </div>
+            </section>
+
+            <aside class="qe-action-card">
+                <h2>Activos seleccionados</h2>
+
+                <div class="qe-selected-summary">
+                    Total seleccionado: {{ queryset|length }}
+                </div>
+
+                <div class="qe-selected-list">
+                    {% for activo in queryset %}
+                        <div class="qe-selected-item">
+                            <strong>
+                                {{ activo.simbolo }} — {{ activo.nombre }}
+                            </strong>
+
+                            <span>
+                                Riesgo:
+                                {{ activo.get_riesgo_display }}
+                                · Recomendación:
+                                {{ activo.get_recomendacion_display }}
+                                · Score:
+                                {{ activo.puntaje_quant }}/100
+                            </span>
+                        </div>
+                    {% empty %}
+                        <div class="qe-selected-item">
+                            <strong>No hay activos seleccionados.</strong>
+                        </div>
+                    {% endfor %}
+                </div>
+            </aside>
+
+        </div>
+    </form>
+</div>
+{% endblock %}

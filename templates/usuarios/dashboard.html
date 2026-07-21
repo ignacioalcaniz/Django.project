@@ -1,14 +1,14 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard | QuantEdge{% endblock %}
+{% extends "usuarios/base_dashboard.html" %}
 
 {% load static %}
+
+{% block title %}Dashboard | QuantEdge{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block dashboard_content %}
 
 <main class="dashboard">
 
@@ -17,26 +17,41 @@
     {{ portfolio_rentabilidades|json_script:"portfolioReturnsData" }}
     {{ portfolio_scores|json_script:"portfolioScoresData" }}
 
-    <section class="welcome">
+    <section class="welcome gsap-intro-section">
         <div>
             <span class="badge">Dashboard privado</span>
-            <h1>Hola, {{ usuario.username }}</h1>
-            <p>Gestioná tus activos, compras simuladas, watchlist y asesoramientos de IA.</p>
+
+            <h1>
+                Hola, {{ usuario.username }}
+            </h1>
+
+            <p>
+                Gestioná tus activos, compras simuladas, watchlist
+                y asesoramientos de IA.
+            </p>
         </div>
 
         {% if request.user.is_staff %}
             <div class="admin-card">
                 <strong>Modo administrador</strong>
-                <span>Tenés acceso al panel de administración.</span>
-                <a href="/admin/">Ir al admin</a>
+
+                <span>
+                    Tenés acceso al panel de administración.
+                </span>
+
+                <a href="{% url 'admin:index' %}">
+                    Ir al admin
+                </a>
             </div>
         {% endif %}
     </section>
 
-    <section class="portfolio-executive">
+    <section class="portfolio-executive gsap-intro-section">
         <div class="portfolio-executive-main">
             <span>Portfolio inteligente</span>
+
             <h2>Resumen ejecutivo de tu cuenta</h2>
+
             <p>
                 Seguimiento consolidado de capital invertido, valor actual,
                 rendimiento estimado, riesgo y calidad promedio del portfolio.
@@ -46,47 +61,73 @@
         <div class="portfolio-executive-grid">
             <div class="executive-card">
                 <span>Total invertido</span>
-                <strong>USD {{ total_invertido|floatformat:2 }}</strong>
+
+                <strong>
+                    USD {{ total_invertido|floatformat:2 }}
+                </strong>
             </div>
 
             <div class="executive-card">
                 <span>Valor actual</span>
-                <strong>USD {{ valor_actual_total|floatformat:2 }}</strong>
+
+                <strong>
+                    USD {{ valor_actual_total|floatformat:2 }}
+                </strong>
             </div>
 
             <div class="executive-card">
                 <span>Resultado total</span>
+
                 {% if ganancia_total >= 0 %}
-                    <strong class="positive">+USD {{ ganancia_total|floatformat:2 }}</strong>
+                    <strong class="positive">
+                        +USD {{ ganancia_total|floatformat:2 }}
+                    </strong>
                 {% else %}
-                    <strong class="negative">USD {{ ganancia_total|floatformat:2 }}</strong>
+                    <strong class="negative">
+                        USD {{ ganancia_total|floatformat:2 }}
+                    </strong>
                 {% endif %}
             </div>
 
             <div class="executive-card">
                 <span>Rentabilidad total</span>
+
                 {% if rentabilidad_total >= 0 %}
-                    <strong class="positive">+{{ rentabilidad_total|floatformat:2 }}%</strong>
+                    <strong class="positive">
+                        +{{ rentabilidad_total|floatformat:2 }}%
+                    </strong>
                 {% else %}
-                    <strong class="negative">{{ rentabilidad_total|floatformat:2 }}%</strong>
+                    <strong class="negative">
+                        {{ rentabilidad_total|floatformat:2 }}%
+                    </strong>
                 {% endif %}
             </div>
 
             <div class="executive-card">
                 <span>Score promedio</span>
-                <strong>{{ score_promedio|floatformat:1 }}/100</strong>
+
+                <strong>
+                    {{ score_promedio|floatformat:1 }}/100
+                </strong>
             </div>
 
             <div class="executive-card">
                 <span>Riesgo promedio</span>
-                <strong>{{ riesgo_promedio }}</strong>
+
+                <strong>
+                    {{ riesgo_promedio }}
+                </strong>
             </div>
         </div>
 
         {% if activo_mas_rentable %}
             <div class="best-asset-card">
                 <span>Activo más rentable</span>
-                <strong>{{ activo_mas_rentable.activo.simbolo }}</strong>
+
+                <strong>
+                    {{ activo_mas_rentable.activo.simbolo }}
+                </strong>
+
                 <p>
                     {{ activo_mas_rentable.activo.nombre }} ·
                     {{ activo_mas_rentable.rentabilidad_porcentual|floatformat:2 }}%
@@ -95,74 +136,124 @@
         {% endif %}
     </section>
 
-    <section class="panel charts-panel">
+    <section class="panel charts-panel gsap-scroll-section">
         <div class="section-title left">
             <span>Portfolio Analytics</span>
+
             <h2>Visualización del rendimiento</h2>
-            <p>Distribución del portfolio, rentabilidad por operación y score de los activos comprados.</p>
+
+            <p>
+                Distribución del portfolio, rentabilidad por operación
+                y score de los activos comprados.
+            </p>
         </div>
 
         {% if inversiones %}
             <div class="charts-grid">
                 <article class="chart-card">
                     <h3>Distribución por valor actual</h3>
-                    <p>Cuánto representa cada activo dentro del portfolio.</p>
+
+                    <p>
+                        Cuánto representa cada activo dentro del portfolio.
+                    </p>
+
                     <div class="chart-box">
-                        <canvas id="portfolioDistributionChart"></canvas>
+                        <canvas
+                            id="portfolioDistributionChart"
+                            aria-label="Gráfico de distribución del portfolio"
+                            role="img"
+                        ></canvas>
                     </div>
                 </article>
 
                 <article class="chart-card">
                     <h3>Rentabilidad por activo</h3>
-                    <p>Ganancia o pérdida porcentual estimada por operación.</p>
+
+                    <p>
+                        Ganancia o pérdida porcentual estimada por operación.
+                    </p>
+
                     <div class="chart-box">
-                        <canvas id="portfolioReturnsChart"></canvas>
+                        <canvas
+                            id="portfolioReturnsChart"
+                            aria-label="Gráfico de rentabilidad por activo"
+                            role="img"
+                        ></canvas>
                     </div>
                 </article>
 
                 <article class="chart-card wide">
                     <h3>Score QuantEdge por activo</h3>
-                    <p>Comparación del puntaje interno de calidad/riesgo de cada activo adquirido.</p>
+
+                    <p>
+                        Comparación del puntaje interno de calidad y riesgo
+                        de cada activo adquirido.
+                    </p>
+
                     <div class="chart-box wide-box">
-                        <canvas id="portfolioScoresChart"></canvas>
+                        <canvas
+                            id="portfolioScoresChart"
+                            aria-label="Gráfico de score QuantEdge"
+                            role="img"
+                        ></canvas>
                     </div>
                 </article>
             </div>
         {% else %}
             <div class="empty">
                 <h3>No hay datos suficientes para gráficos</h3>
-                <p>Realizá una compra simulada para activar Portfolio Analytics.</p>
+
+                <p>
+                    Realizá una compra simulada para activar
+                    Portfolio Analytics.
+                </p>
             </div>
         {% endif %}
     </section>
 
-    <section class="summary-grid">
+    <section class="summary-grid gsap-scroll-section">
         <div class="summary-card">
             <span>Total invertido simulado</span>
-            <strong>USD {{ total_invertido|floatformat:2 }}</strong>
+
+            <strong>
+                USD {{ total_invertido|floatformat:2 }}
+            </strong>
         </div>
 
         <div class="summary-card">
             <span>Operaciones simuladas</span>
-            <strong>{{ cantidad_inversiones }}</strong>
+
+            <strong>
+                {{ cantidad_inversiones }}
+            </strong>
         </div>
 
         <div class="summary-card">
             <span>Consultas IA</span>
-            <strong>{{ cantidad_consultas }}</strong>
+
+            <strong>
+                {{ cantidad_consultas }}
+            </strong>
         </div>
 
         <div class="summary-card">
             <span>Activos en watchlist</span>
-            <strong>{{ cantidad_favoritos }}</strong>
+
+            <strong>
+                {{ cantidad_favoritos }}
+            </strong>
         </div>
     </section>
 
-    <section class="panel watchlist-panel">
+    <section class="panel watchlist-panel gsap-scroll-section">
         <div class="section-title left">
             <span>Watchlist</span>
+
             <h2>Mis activos favoritos</h2>
-            <p>Seguimiento rápido de los activos que te interesan.</p>
+
+            <p>
+                Seguimiento rápido de los activos que te interesan.
+            </p>
         </div>
 
         {% if favoritos %}
@@ -171,41 +262,83 @@
                     <article class="watch-card">
                         <div class="watch-top">
                             {% if favorito.activo.imagen %}
-                                <img src="{{ favorito.activo.imagen.url }}" alt="{{ favorito.activo.nombre }}">
+                                <img
+                                    src="{{ favorito.activo.imagen.url }}"
+                                    alt="Logo de {{ favorito.activo.nombre }}"
+                                    loading="lazy"
+                                >
                             {% else %}
-                                <div class="watch-logo">{{ favorito.activo.simbolo|slice:":1" }}</div>
+                                <div
+                                    class="watch-logo"
+                                    aria-hidden="true"
+                                >
+                                    {{ favorito.activo.simbolo|slice:":1" }}
+                                </div>
                             {% endif %}
 
                             <div>
-                                <h3>{{ favorito.activo.simbolo }}</h3>
-                                <span>{{ favorito.activo.nombre }}</span>
+                                <h3>
+                                    {{ favorito.activo.simbolo }}
+                                </h3>
+
+                                <span>
+                                    {{ favorito.activo.nombre }}
+                                </span>
                             </div>
                         </div>
 
                         <div class="watch-price">
-                            {{ favorito.activo.moneda }} {{ favorito.activo.precio_actual }}
+                            {{ favorito.activo.moneda }}
+                            {{ favorito.activo.precio_actual|floatformat:2 }}
                         </div>
 
                         {% if favorito.activo.variacion_diaria > 0 %}
-                            <div class="positive">+{{ favorito.activo.variacion_diaria }}%</div>
+                            <div class="positive">
+                                +{{ favorito.activo.variacion_diaria|floatformat:2 }}%
+                            </div>
                         {% elif favorito.activo.variacion_diaria < 0 %}
-                            <div class="negative">{{ favorito.activo.variacion_diaria }}%</div>
+                            <div class="negative">
+                                {{ favorito.activo.variacion_diaria|floatformat:2 }}%
+                            </div>
                         {% else %}
-                            <div class="neutral">{{ favorito.activo.variacion_diaria }}%</div>
+                            <div class="neutral">
+                                {{ favorito.activo.variacion_diaria|floatformat:2 }}%
+                            </div>
                         {% endif %}
 
                         <div class="watch-meta">
-                            <span>Score {{ favorito.activo.puntaje_quant }}/100</span>
-                            <span>{{ favorito.activo.get_recomendacion_display }}</span>
+                            <span>
+                                Score
+                                {{ favorito.activo.puntaje_quant }}/100
+                            </span>
+
+                            <span>
+                                {{ favorito.activo.get_recomendacion_display }}
+                            </span>
                         </div>
 
                         <div class="watch-actions">
-                            <a href="{% url 'activo_detalle' favorito.activo.id %}">Ver activo</a>
+                            <a
+                                href="{% url 'activo_detalle' favorito.activo.id %}"
+                            >
+                                Ver activo
+                            </a>
 
-                            <form method="post" action="{% url 'alternar_favorito' favorito.activo.id %}">
+                            <form
+                                method="post"
+                                action="{% url 'alternar_favorito' favorito.activo.id %}"
+                            >
                                 {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.path }}">
-                                <button type="submit">Quitar</button>
+
+                                <input
+                                    type="hidden"
+                                    name="next"
+                                    value="{{ request.path }}"
+                                >
+
+                                <button type="submit">
+                                    Quitar
+                                </button>
                             </form>
                         </div>
                     </article>
@@ -214,110 +347,204 @@
         {% else %}
             <div class="empty-watchlist">
                 <h3>Todavía no tenés activos favoritos</h3>
-                <p>Entrá al detalle de un activo y agregalo a tu watchlist para seguirlo desde acá.</p>
+
+                <p>
+                    Entrá al detalle de un activo y agregalo a tu watchlist
+                    para seguirlo desde acá.
+                </p>
             </div>
         {% endif %}
     </section>
 
-    <section class="panel market-panel">
+    <section
+        class="panel market-panel gsap-scroll-section"
+        id="marketSection"
+    >
         <div class="section-title">
             <span>Mercado</span>
+
             <h2>Activos disponibles</h2>
-            <p>Filtrá activos por recomendación, riesgo o buscá por nombre y símbolo sin recargar la página.</p>
+
+            <p>
+                Buscá y filtrá activos contra la base de datos
+                sin recargar la página.
+            </p>
         </div>
 
         <div class="market-toolbar">
             <div class="market-search">
-                <label for="assetSearchInput">Buscar activo</label>
+                <label for="assetSearchInput">
+                    Buscar activo
+                </label>
+
                 <input
-                    type="text"
+                    type="search"
                     id="assetSearchInput"
+                    name="search"
+                    maxlength="100"
+                    autocomplete="off"
                     placeholder="Ej: Apple, Tesla, NVDA..."
+                    aria-describedby="marketSearchHelp"
                 >
+
+                <small id="marketSearchHelp" class="market-search-help">
+                    Podés buscar por nombre, símbolo, sector o bolsa.
+                </small>
             </div>
 
-            <div class="market-filters">
-                <button type="button" class="market-filter-btn active" data-filter-type="all" data-filter-value="all">Todos</button>
-                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="comprar">Comprar</button>
-                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="mantener">Mantener</button>
-                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="observar">Observar</button>
-                <button type="button" class="market-filter-btn" data-filter-type="recommendation" data-filter-value="vender">Vender</button>
-                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="bajo">Riesgo bajo</button>
-                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="medio">Riesgo medio</button>
-                <button type="button" class="market-filter-btn" data-filter-type="risk" data-filter-value="alto">Riesgo alto</button>
+            <div
+                class="market-filters"
+                role="group"
+                aria-label="Filtros del mercado"
+            >
+                <button
+                    type="button"
+                    class="market-filter-btn active"
+                    data-filter-type="all"
+                    data-filter-value="all"
+                    aria-pressed="true"
+                >
+                    Todos
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="recommendation"
+                    data-filter-value="comprar"
+                    aria-pressed="false"
+                >
+                    Comprar
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="recommendation"
+                    data-filter-value="mantener"
+                    aria-pressed="false"
+                >
+                    Mantener
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="recommendation"
+                    data-filter-value="observar"
+                    aria-pressed="false"
+                >
+                    Observar
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="recommendation"
+                    data-filter-value="vender"
+                    aria-pressed="false"
+                >
+                    Vender
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="risk"
+                    data-filter-value="bajo"
+                    aria-pressed="false"
+                >
+                    Riesgo bajo
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="risk"
+                    data-filter-value="medio"
+                    aria-pressed="false"
+                >
+                    Riesgo medio
+                </button>
+
+                <button
+                    type="button"
+                    class="market-filter-btn"
+                    data-filter-type="risk"
+                    data-filter-value="alto"
+                    aria-pressed="false"
+                >
+                    Riesgo alto
+                </button>
             </div>
 
-            <p class="market-results-counter">0 activo/s encontrados</p>
+            <div class="market-status-row">
+                <p
+                    class="market-results-counter"
+                    id="marketResultsCounter"
+                    aria-live="polite"
+                >
+                    {{ activos|length }} activo/s encontrados
+                </p>
+
+                <div
+                    class="market-loader"
+                    id="marketLoader"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                >
+                    <span
+                        class="market-loader-spinner"
+                        aria-hidden="true"
+                    ></span>
+
+                    <span>Actualizando mercado...</span>
+                </div>
+            </div>
+
+            <div
+                class="market-error"
+                id="marketError"
+                role="alert"
+                hidden
+            >
+                <strong>No pudimos actualizar los activos.</strong>
+
+                <span>
+                    Revisá tu conexión e intentá nuevamente.
+                </span>
+
+                <button
+                    type="button"
+                    id="marketRetryButton"
+                >
+                    Reintentar
+                </button>
+            </div>
         </div>
 
-        <div class="assets-grid">
-            {% for activo in activos %}
-                <article
-                    class="asset-card"
-                    data-recommendation="{{ activo.recomendacion }}"
-                    data-risk="{{ activo.riesgo }}"
-                    data-symbol="{{ activo.simbolo }}"
-                    data-name="{{ activo.nombre }}"
-                >
-                    <div class="asset-header">
-                        {% if activo.imagen %}
-                            <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}">
-                        {% else %}
-                            <div class="logo-placeholder">{{ activo.simbolo|slice:":1" }}</div>
-                        {% endif %}
-
-                        <div>
-                            <h3>{{ activo.nombre }}</h3>
-                            <span>{{ activo.simbolo }} · {{ activo.bolsa }}</span>
-                        </div>
-                    </div>
-
-                    <div class="asset-price">{{ activo.moneda }} {{ activo.precio_actual }}</div>
-
-                    {% if activo.variacion_diaria > 0 %}
-                        <div class="positive">+{{ activo.variacion_diaria }}%</div>
-                    {% elif activo.variacion_diaria < 0 %}
-                        <div class="negative">{{ activo.variacion_diaria }}%</div>
-                    {% else %}
-                        <div class="neutral">{{ activo.variacion_diaria }}%</div>
-                    {% endif %}
-
-                    <div class="asset-info">
-                        <span>Score {{ activo.puntaje_quant }}/100</span>
-                        <span>Riesgo {{ activo.get_riesgo_display }}</span>
-                        <span>{{ activo.get_recomendacion_display }}</span>
-                    </div>
-
-                    <a href="{% url 'activo_detalle' activo.id %}" class="detail-link">
-                        Ver análisis completo
-                    </a>
-
-                    <form method="post" action="{% url 'comprar_activo' activo.id %}" class="buy-form">
-                        {% csrf_token %}
-                        <input type="number" name="cantidad" min="1" value="1">
-                        <button type="submit">Comprar simulado</button>
-                    </form>
-
-                    <form method="post" action="{% url 'asesorar_activo' activo.id %}" class="ai-form">
-                        {% csrf_token %}
-                        <input type="text" name="pregunta" placeholder="Ej: ¿Conviene comprar hoy?">
-                        <button type="submit">Pedir asesoramiento IA</button>
-                    </form>
-                </article>
-            {% empty %}
-                <div class="empty">
-                    <h3>No hay activos cargados</h3>
-                    <p>Agregá activos desde el panel admin.</p>
-                </div>
-            {% endfor %}
+        <div
+            class="assets-grid"
+            id="assetsGrid"
+            data-ajax-url="{% url 'buscar_activos_ajax' %}"
+            aria-live="polite"
+            aria-busy="false"
+        >
+            {% include "usuarios/partials/_asset_cards.html" %}
         </div>
     </section>
 
-    <section class="panel portfolio-panel">
+    <section class="panel portfolio-panel gsap-scroll-section">
         <div class="section-title left">
             <span>Portfolio</span>
+
             <h2>Mis compras simuladas</h2>
-            <p>Seguimiento de rendimiento estimado según el precio actual de cada activo.</p>
+
+            <p>
+                Seguimiento de rendimiento estimado según el precio actual
+                de cada activo.
+            </p>
         </div>
 
         {% if inversiones %}
@@ -326,49 +553,78 @@
                     <article class="portfolio-card">
                         <div class="portfolio-top">
                             <div>
-                                <h3>{{ inversion.activo.simbolo }}</h3>
-                                <span>{{ inversion.activo.nombre }}</span>
+                                <h3>
+                                    {{ inversion.activo.simbolo }}
+                                </h3>
+
+                                <span>
+                                    {{ inversion.activo.nombre }}
+                                </span>
                             </div>
 
                             {% if inversion.resultado_es_positivo %}
-                                <strong class="portfolio-badge positive-bg">Ganancia</strong>
+                                <strong class="portfolio-badge positive-bg">
+                                    Ganancia
+                                </strong>
                             {% else %}
-                                <strong class="portfolio-badge negative-bg">Pérdida</strong>
+                                <strong class="portfolio-badge negative-bg">
+                                    Pérdida
+                                </strong>
                             {% endif %}
                         </div>
 
                         <div class="portfolio-numbers">
                             <div>
                                 <span>Cantidad</span>
-                                <strong>{{ inversion.cantidad }}</strong>
+
+                                <strong>
+                                    {{ inversion.cantidad }}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Precio compra</span>
-                                <strong>USD {{ inversion.precio_compra }}</strong>
+
+                                <strong>
+                                    USD {{ inversion.precio_compra|floatformat:2 }}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Precio actual</span>
-                                <strong>USD {{ inversion.activo.precio_actual }}</strong>
+
+                                <strong>
+                                    USD {{ inversion.activo.precio_actual|floatformat:2 }}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Total invertido</span>
-                                <strong>USD {{ inversion.total_invertido }}</strong>
+
+                                <strong>
+                                    USD {{ inversion.total_invertido|floatformat:2 }}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Valor actual</span>
-                                <strong>USD {{ inversion.valor_actual }}</strong>
+
+                                <strong>
+                                    USD {{ inversion.valor_actual|floatformat:2 }}
+                                </strong>
                             </div>
 
                             <div>
                                 <span>Resultado</span>
+
                                 {% if inversion.resultado_es_positivo %}
-                                    <strong class="positive">+USD {{ inversion.ganancia_perdida }}</strong>
+                                    <strong class="positive">
+                                        +USD {{ inversion.ganancia_perdida|floatformat:2 }}
+                                    </strong>
                                 {% else %}
-                                    <strong class="negative">USD {{ inversion.ganancia_perdida }}</strong>
+                                    <strong class="negative">
+                                        USD {{ inversion.ganancia_perdida|floatformat:2 }}
+                                    </strong>
                                 {% endif %}
                             </div>
                         </div>
@@ -377,28 +633,42 @@
                             <span>Rentabilidad estimada</span>
 
                             {% if inversion.resultado_es_positivo %}
-                                <strong class="positive">+{{ inversion.rentabilidad_porcentual|floatformat:2 }}%</strong>
+                                <strong class="positive">
+                                    +{{ inversion.rentabilidad_porcentual|floatformat:2 }}%
+                                </strong>
                             {% else %}
-                                <strong class="negative">{{ inversion.rentabilidad_porcentual|floatformat:2 }}%</strong>
+                                <strong class="negative">
+                                    {{ inversion.rentabilidad_porcentual|floatformat:2 }}%
+                                </strong>
                             {% endif %}
                         </div>
 
-                        <a href="{% url 'activo_detalle' inversion.activo.id %}" class="detail-link">
+                        <a
+                            href="{% url 'activo_detalle' inversion.activo.id %}"
+                            class="detail-link"
+                        >
                             Ver activo
                         </a>
                     </article>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="muted">Todavía no hiciste compras simuladas.</p>
+            <p class="muted">
+                Todavía no hiciste compras simuladas.
+            </p>
         {% endif %}
     </section>
 
-    <section class="panel">
+    <section class="panel gsap-scroll-section">
         <div class="section-title left">
             <span>IA</span>
+
             <h2>Últimos asesoramientos</h2>
-            <a href="{% url 'historial_ia' %}" class="mini-detail-link">
+
+            <a
+                href="{% url 'historial_ia' %}"
+                class="mini-detail-link"
+            >
                 Ver historial completo →
             </a>
         </div>
@@ -406,17 +676,28 @@
         {% if consultas %}
             <div class="ia-list">
                 {% for consulta in consultas %}
-                    <div class="ia-item">
-                        <strong>{{ consulta.activo.simbolo }}</strong>
-                        <p>{{ consulta.respuesta }}</p>
-                        <a href="{% url 'detalle_analisis' consulta.id %}" class="mini-detail-link">
+                    <article class="ia-item">
+                        <strong>
+                            {{ consulta.activo.simbolo }}
+                        </strong>
+
+                        <p>
+                            {{ consulta.respuesta|truncatewords:55 }}
+                        </p>
+
+                        <a
+                            href="{% url 'detalle_analisis' consulta.id %}"
+                            class="mini-detail-link"
+                        >
                             Ver análisis
                         </a>
-                    </div>
+                    </article>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="muted">Todavía no pediste asesoramientos IA.</p>
+            <p class="muted">
+                Todavía no pediste asesoramientos IA.
+            </p>
         {% endif %}
     </section>
 
@@ -426,6 +707,7 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'js/dashboard.js' %}?v=20"></script>
+<script src="{% static 'js/dashboard.js' %}?v=30"></script>
 {% endblock %}
