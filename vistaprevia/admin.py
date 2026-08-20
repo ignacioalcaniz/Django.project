@@ -9,7 +9,9 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.utils.html import format_html
 
+from .exceptions import MarketDataError
 from .models import Producto
+from .services.market_data import TwelveDataClient
 
 
 admin.site.site_header = "QuantEdge Admin | Inteligencia Bursátil"
@@ -20,13 +22,15 @@ admin.site.index_title = "Panel de administración de QuantEdge"
 class ActualizacionAnalisisForm(forms.Form):
     recomendacion = forms.ChoiceField(
         label="Nueva recomendación",
-        choices=[("", "Mantener valor actual")] + Producto.RECOMENDACIONES,
+        choices=[("", "Mantener valor actual")]
+        + Producto.RECOMENDACIONES,
         required=False,
     )
 
     riesgo = forms.ChoiceField(
         label="Nuevo nivel de riesgo",
-        choices=[("", "Mantener valor actual")] + Producto.NIVELES_RIESGO,
+        choices=[("", "Mantener valor actual")]
+        + Producto.NIVELES_RIESGO,
         required=False,
     )
 
@@ -35,7 +39,10 @@ class ActualizacionAnalisisForm(forms.Form):
         required=False,
         min_value=0,
         max_value=100,
-        help_text="Dejá el campo vacío para mantener el puntaje actual.",
+        help_text=(
+            "Dejá el campo vacío para mantener "
+            "el puntaje actual."
+        ),
     )
 
     confianza_modelo = forms.IntegerField(
@@ -53,8 +60,8 @@ class ActualizacionAnalisisForm(forms.Form):
             attrs={
                 "rows": 5,
                 "placeholder": (
-                    "Escribí una observación profesional para los "
-                    "activos seleccionados."
+                    "Escribí una observación profesional "
+                    "para los activos seleccionados."
                 ),
             }
         ),
@@ -96,12 +103,11 @@ class ActualizacionAnalisisForm(forms.Form):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    change_list_template = "admin/vistaprevia/producto/change_list.html"
-
     list_display = (
         "id",
         "preview_imagen",
         "simbolo_badge",
+        "ticker_externo",
         "nombre",
         "tipo_activo_badge",
         "precio_actual",
@@ -121,6 +127,7 @@ class ProductoAdmin(admin.ModelAdmin):
     )
 
     list_editable = (
+        "ticker_externo",
         "precio_actual",
     )
 
@@ -169,6 +176,7 @@ class ProductoAdmin(admin.ModelAdmin):
     )
 
     actions = (
+        "sincronizar_cotizaciones_twelve_data",
         "actualizar_analisis_intermedio",
         "marcar_como_destacados",
         "quitar_destacados",
@@ -193,7 +201,14 @@ class ProductoAdmin(admin.ModelAdmin):
                     "simbolo",
                     "ticker_externo",
                     "descripcion",
-                )
+                ),
+                "description": (
+                    "El símbolo identifica al activo dentro de QuantEdge. "
+                    "El ticker externo corresponde al identificador utilizado "
+                    "por el proveedor de datos de mercado. Para acciones "
+                    "estadounidenses en Twelve Data normalmente será, "
+                    "por ejemplo, AAPL, NVDA o TSLA."
+                ),
             },
         ),
         (
@@ -219,29 +234,33 @@ class ProductoAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Precios y variaciones",
+            "Datos de mercado",
             {
                 "fields": (
                     "precio_actual",
-                    "precio_objetivo",
                     "apertura",
                     "cierre_anterior",
+                    "maximo_dia",
+                    "minimo_dia",
                     "variacion_diaria",
                     "variacion_semanal",
                     "variacion_mensual",
-                    "maximo_dia",
-                    "minimo_dia",
                     "maximo_52_semanas",
                     "minimo_52_semanas",
-                )
+                    "volumen",
+                    "volumen_promedio",
+                ),
+                "description": (
+                    "Estos campos pueden ser sincronizados "
+                    "desde el proveedor externo de datos."
+                ),
             },
         ),
         (
-            "Volumen y valoración",
+            "Valoración fundamental",
             {
                 "fields": (
-                    "volumen",
-                    "volumen_promedio",
+                    "precio_objetivo",
                     "capitalizacion_mercado",
                     "pe_ratio",
                     "eps",
@@ -261,7 +280,12 @@ class ProductoAdmin(admin.ModelAdmin):
                     "nota_analista",
                     "tesis_inversion",
                     "fecha_ultima_revision",
-                )
+                ),
+                "description": (
+                    "Estos campos pertenecen a la capa analítica "
+                    "propia de QuantEdge y no son reemplazados "
+                    "automáticamente por la API de mercado."
+                ),
             },
         ),
         (
@@ -285,15 +309,133 @@ class ProductoAdmin(admin.ModelAdmin):
     )
 
     @admin.action(
+        description="Sincronizar cotización desde Twelve Data"
+    )
+    def sincronizar_cotizaciones_twelve_data(
+        self,
+        request,
+        queryset,
+    ):
+        try:
+            client = TwelveDataClient()
+
+        except MarketDataError as exc:
+            self.message_user(
+                request,
+                f"No fue posible iniciar Twelve Data: {exc}",
+                level=messages.ERROR,
+            )
+            return
+
+        actualizados = 0
+        errores = 0
+
+        for activo in queryset:
+            ticker = (
+                activo.ticker_externo.strip()
+                if activo.ticker_externo
+                else activo.simbolo.strip()
+            )
+
+            if not ticker:
+                errores += 1
+
+                self.message_user(
+                    request,
+                    (
+                        f"{activo.nombre}: "
+                        "no tiene ticker configurado."
+                    ),
+                    level=messages.WARNING,
+                )
+                continue
+
+            try:
+                quote = client.get_quote(ticker)
+
+                activo.precio_actual = quote.price
+                activo.apertura = quote.open_price
+                activo.cierre_anterior = quote.previous_close
+                activo.maximo_dia = quote.high
+                activo.minimo_dia = quote.low
+                activo.variacion_diaria = quote.percent_change
+                activo.volumen = quote.volume
+
+                if quote.exchange:
+                    activo.bolsa = quote.exchange
+
+                monedas_validas = dict(
+                    Producto.MONEDAS
+                )
+
+                if quote.currency in monedas_validas:
+                    activo.moneda = quote.currency
+
+                activo.save(
+                    update_fields=[
+                        "precio_actual",
+                        "apertura",
+                        "cierre_anterior",
+                        "maximo_dia",
+                        "minimo_dia",
+                        "variacion_diaria",
+                        "volumen",
+                        "bolsa",
+                        "moneda",
+                        "fecha_actualizacion",
+                    ]
+                )
+
+                actualizados += 1
+
+            except MarketDataError as exc:
+                errores += 1
+
+                self.message_user(
+                    request,
+                    (
+                        f"{activo.simbolo}: "
+                        f"no pudo sincronizarse. {exc}"
+                    ),
+                    level=messages.WARNING,
+                )
+
+        if actualizados:
+            self.message_user(
+                request,
+                (
+                    f"{actualizados} activo/s sincronizado/s "
+                    "correctamente con Twelve Data."
+                ),
+                level=messages.SUCCESS,
+            )
+
+        if errores:
+            self.message_user(
+                request,
+                (
+                    f"{errores} activo/s no pudieron "
+                    "sincronizarse."
+                ),
+                level=messages.WARNING,
+            )
+
+    @admin.action(
         description="Actualizar análisis QuantEdge con confirmación"
     )
-    def actualizar_analisis_intermedio(self, request, queryset):
+    def actualizar_analisis_intermedio(
+        self,
+        request,
+        queryset,
+    ):
         selected_ids = request.POST.getlist(
             helpers.ACTION_CHECKBOX_NAME
         )
 
         if "apply" in request.POST:
-            form = ActualizacionAnalisisForm(request.POST)
+            form = ActualizacionAnalisisForm(
+                request.POST
+            )
 
             if form.is_valid():
                 datos_actualizacion = {}
@@ -319,34 +461,36 @@ class ProductoAdmin(admin.ModelAdmin):
                 )
 
                 if recomendacion:
-                    datos_actualizacion["recomendacion"] = (
-                        recomendacion
-                    )
+                    datos_actualizacion[
+                        "recomendacion"
+                    ] = recomendacion
 
                 if riesgo:
-                    datos_actualizacion["riesgo"] = riesgo
+                    datos_actualizacion[
+                        "riesgo"
+                    ] = riesgo
 
                 if puntaje_quant is not None:
-                    datos_actualizacion["puntaje_quant"] = (
-                        puntaje_quant
-                    )
+                    datos_actualizacion[
+                        "puntaje_quant"
+                    ] = puntaje_quant
 
                 if confianza_modelo is not None:
-                    datos_actualizacion["confianza_modelo"] = (
-                        confianza_modelo
-                    )
+                    datos_actualizacion[
+                        "confianza_modelo"
+                    ] = confianza_modelo
 
                 if nota_analista:
-                    datos_actualizacion["nota_analista"] = (
-                        nota_analista.strip()
-                    )
+                    datos_actualizacion[
+                        "nota_analista"
+                    ] = nota_analista.strip()
 
                 if form.cleaned_data.get(
                     "actualizar_fecha_revision"
                 ):
-                    datos_actualizacion["fecha_ultima_revision"] = (
-                        timezone.localdate()
-                    )
+                    datos_actualizacion[
+                        "fecha_ultima_revision"
+                    ] = timezone.localdate()
 
                 actualizados = queryset.update(
                     **datos_actualizacion
@@ -355,14 +499,18 @@ class ProductoAdmin(admin.ModelAdmin):
                 self.message_user(
                     request,
                     (
-                        f"{actualizados} activo/s actualizado/s "
-                        "correctamente mediante la página "
-                        "intermedia de análisis."
+                        f"{actualizados} activo/s "
+                        "actualizado/s correctamente "
+                        "mediante la página intermedia "
+                        "de análisis."
                     ),
                     level=messages.SUCCESS,
                 )
 
-                return redirect(request.get_full_path())
+                return redirect(
+                    request.get_full_path()
+                )
+
         else:
             form = ActualizacionAnalisisForm()
 
@@ -370,13 +518,15 @@ class ProductoAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Actualizar análisis QuantEdge",
             "subtitle": (
-                "Configurá los nuevos valores antes de ejecutar "
-                "la actualización masiva."
+                "Configurá los nuevos valores "
+                "antes de ejecutar la actualización masiva."
             ),
             "form": form,
             "queryset": queryset,
             "selected_ids": selected_ids,
-            "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+            "action_checkbox_name": (
+                helpers.ACTION_CHECKBOX_NAME
+            ),
             "opts": self.model._meta,
             "media": self.media + form.media,
         }
@@ -393,20 +543,31 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Marcar seleccionados como destacados"
     )
-    def marcar_como_destacados(self, request, queryset):
+    def marcar_como_destacados(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             es_destacado=True
         )
 
         self.message_user(
             request,
-            f"{updated} activo/s marcado/s como destacados.",
+            (
+                f"{updated} activo/s marcado/s "
+                "como destacados."
+            ),
         )
 
     @admin.action(
         description="Quitar destacados"
     )
-    def quitar_destacados(self, request, queryset):
+    def quitar_destacados(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             es_destacado=False
         )
@@ -422,7 +583,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Activar activos"
     )
-    def activar_activos(self, request, queryset):
+    def activar_activos(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             activo=True
         )
@@ -435,7 +600,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Desactivar activos"
     )
-    def desactivar_activos(self, request, queryset):
+    def desactivar_activos(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             activo=False
         )
@@ -448,7 +617,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar recomendación a Comprar"
     )
-    def recomendar_comprar(self, request, queryset):
+    def recomendar_comprar(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             recomendacion="comprar"
         )
@@ -464,7 +637,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar recomendación a Mantener"
     )
-    def recomendar_mantener(self, request, queryset):
+    def recomendar_mantener(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             recomendacion="mantener"
         )
@@ -480,7 +657,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar recomendación a Observar"
     )
-    def recomendar_observar(self, request, queryset):
+    def recomendar_observar(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             recomendacion="observar"
         )
@@ -496,7 +677,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar recomendación a Vender"
     )
-    def recomendar_vender(self, request, queryset):
+    def recomendar_vender(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             recomendacion="vender"
         )
@@ -512,7 +697,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar riesgo a Bajo"
     )
-    def riesgo_bajo(self, request, queryset):
+    def riesgo_bajo(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             riesgo="bajo"
         )
@@ -528,7 +717,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar riesgo a Medio"
     )
-    def riesgo_medio(self, request, queryset):
+    def riesgo_medio(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             riesgo="medio"
         )
@@ -544,7 +737,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Cambiar riesgo a Alto"
     )
-    def riesgo_alto(self, request, queryset):
+    def riesgo_alto(
+        self,
+        request,
+        queryset,
+    ):
         updated = queryset.update(
             riesgo="alto"
         )
@@ -560,7 +757,11 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.action(
         description="Exportar activos seleccionados a CSV"
     )
-    def exportar_activos_csv(self, request, queryset):
+    def exportar_activos_csv(
+        self,
+        request,
+        queryset,
+    ):
         response = HttpResponse(
             content_type="text/csv"
         )
@@ -639,7 +840,8 @@ class ProductoAdmin(admin.ModelAdmin):
             )
 
         return format_html(
-            '<span class="qe-admin-muted">Sin imagen</span>'
+            '<span class="qe-admin-muted">{}</span>',
+            "Sin imagen",
         )
 
     preview_imagen.short_description = "Imagen"
@@ -681,21 +883,25 @@ class ProductoAdmin(admin.ModelAdmin):
             obj.variacion_diaria or 0
         )
 
+        valor_formateado = f"{valor:.2f}%"
+
         if valor > 0:
+            valor_formateado = f"+{valor_formateado}"
+
             return format_html(
-                '<span class="qe-positive">+{:.2f}%</span>',
-                valor,
+                '<span class="qe-positive">{}</span>',
+                valor_formateado,
             )
 
         if valor < 0:
             return format_html(
-                '<span class="qe-negative">{:.2f}%</span>',
-                valor,
+                '<span class="qe-negative">{}</span>',
+                valor_formateado,
             )
 
         return format_html(
-            '<span class="qe-neutral">{:.2f}%</span>',
-            valor,
+            '<span class="qe-neutral">{}</span>',
+            valor_formateado,
         )
 
     variacion_coloreada.short_description = "Variación"
@@ -718,7 +924,10 @@ class ProductoAdmin(admin.ModelAdmin):
 
     riesgo_coloreado.short_description = "Riesgo"
 
-    def recomendacion_coloreada(self, obj):
+    def recomendacion_coloreada(
+        self,
+        obj,
+    ):
         clases = {
             "comprar": "qe-positive",
             "mantener": "qe-blue",
@@ -742,10 +951,13 @@ class ProductoAdmin(admin.ModelAdmin):
     def puntaje_quant_badge(self, obj):
         if obj.puntaje_quant >= 80:
             clase = "qe-score-high"
+
         elif obj.puntaje_quant >= 60:
             clase = "qe-score-good"
+
         elif obj.puntaje_quant >= 40:
             clase = "qe-score-mid"
+
         else:
             clase = "qe-score-low"
 
@@ -760,11 +972,13 @@ class ProductoAdmin(admin.ModelAdmin):
     def activo_coloreado(self, obj):
         if obj.activo:
             return format_html(
-                '<span class="qe-positive">Activo</span>'
+                '<span class="qe-positive">{}</span>',
+                "Activo",
             )
 
         return format_html(
-            '<span class="qe-negative">Inactivo</span>'
+            '<span class="qe-negative">{}</span>',
+            "Inactivo",
         )
 
     activo_coloreado.short_description = "Estado"
@@ -772,15 +986,13 @@ class ProductoAdmin(admin.ModelAdmin):
     def destacado_coloreado(self, obj):
         if obj.es_destacado:
             return format_html(
-                (
-                    '<span class="qe-warning">'
-                    "★ Destacado"
-                    "</span>"
-                )
+                '<span class="qe-warning">{}</span>',
+                "★ Destacado",
             )
 
         return format_html(
-            '<span class="qe-neutral">Normal</span>'
+            '<span class="qe-neutral">{}</span>',
+            "Normal",
         )
 
     destacado_coloreado.short_description = "Visibilidad"

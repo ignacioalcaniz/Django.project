@@ -24,17 +24,20 @@ class PerfilUsuarioAdmin(admin.ModelAdmin):
         "pais",
         "fecha_actualizacion",
     )
+
     search_fields = (
         "usuario__username",
         "usuario__email",
         "nombre_completo",
         "pais",
     )
+
     list_filter = (
         "perfil_inversor",
         "pais",
         "fecha_actualizacion",
     )
+
     ordering = ("usuario__username",)
     list_per_page = 20
 
@@ -44,10 +47,11 @@ class PerfilUsuarioAdmin(admin.ModelAdmin):
             "moderado": "#2563eb",
             "agresivo": "#dc2626",
         }
+
         return format_html(
             '<span style="background:{};" class="qe-badge-white">{}</span>',
             colores.get(obj.perfil_inversor, "#334155"),
-            obj.get_perfil_inversor_display()
+            obj.get_perfil_inversor_display(),
         )
 
     perfil_badge.short_description = "Perfil inversor"
@@ -67,56 +71,74 @@ class InversionSimuladaAdmin(admin.ModelAdmin):
         "activa",
         "fecha_compra",
     )
+
     search_fields = (
         "usuario__username",
         "usuario__email",
         "activo__nombre",
         "activo__simbolo",
     )
+
     list_filter = (
         "activa",
         "fecha_compra",
         "activo",
     )
+
     ordering = ("-fecha_compra",)
     list_per_page = 20
     readonly_fields = ("fecha_compra",)
-    actions = ("exportar_inversiones_csv",)
 
-    @admin.action(description="Exportar inversiones seleccionadas a CSV")
+    actions = (
+        "exportar_inversiones_csv",
+    )
+
+    @admin.action(
+        description="Exportar inversiones seleccionadas a CSV"
+    )
     def exportar_inversiones_csv(self, request, queryset):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="quantedge_inversiones.csv"'
+        response = HttpResponse(
+            content_type="text/csv"
+        )
+
+        response["Content-Disposition"] = (
+            'attachment; filename="quantedge_inversiones.csv"'
+        )
 
         writer = csv.writer(response)
-        writer.writerow([
-            "ID",
-            "Usuario",
-            "Activo",
-            "Cantidad",
-            "Precio compra",
-            "Total invertido",
-            "Valor actual",
-            "Resultado",
-            "Rentabilidad %",
-            "Activa",
-            "Fecha",
-        ])
+
+        writer.writerow(
+            [
+                "ID",
+                "Usuario",
+                "Activo",
+                "Cantidad",
+                "Precio compra",
+                "Total invertido",
+                "Valor actual",
+                "Resultado",
+                "Rentabilidad %",
+                "Activa",
+                "Fecha",
+            ]
+        )
 
         for inversion in queryset:
-            writer.writerow([
-                inversion.id,
-                inversion.usuario.username,
-                inversion.activo.simbolo,
-                inversion.cantidad,
-                inversion.precio_compra,
-                inversion.total_invertido(),
-                inversion.valor_actual(),
-                inversion.ganancia_perdida(),
-                inversion.rentabilidad_porcentual(),
-                inversion.activa,
-                inversion.fecha_compra,
-            ])
+            writer.writerow(
+                [
+                    inversion.id,
+                    inversion.usuario.username,
+                    inversion.activo.simbolo,
+                    inversion.cantidad,
+                    inversion.precio_compra,
+                    inversion.total_invertido(),
+                    inversion.valor_actual(),
+                    inversion.ganancia_perdida(),
+                    inversion.rentabilidad_porcentual(),
+                    inversion.activa,
+                    inversion.fecha_compra,
+                ]
+            )
 
         return response
 
@@ -134,9 +156,15 @@ class InversionSimuladaAdmin(admin.ModelAdmin):
         resultado = obj.ganancia_perdida()
 
         if resultado >= 0:
-            return format_html('<span class="qe-positive">+USD {}</span>', resultado)
+            return format_html(
+                '<span class="qe-positive">+USD {}</span>',
+                resultado,
+            )
 
-        return format_html('<span class="qe-negative">USD {}</span>', resultado)
+        return format_html(
+            '<span class="qe-negative">USD {}</span>',
+            resultado,
+        )
 
     resultado_admin.short_description = "Resultado"
 
@@ -150,6 +178,7 @@ class ConsultaIAAdmin(admin.ModelAdmin):
         "pregunta_corta",
         "fecha_creacion",
     )
+
     search_fields = (
         "usuario__username",
         "usuario__email",
@@ -158,10 +187,12 @@ class ConsultaIAAdmin(admin.ModelAdmin):
         "pregunta",
         "respuesta",
     )
+
     list_filter = (
         "fecha_creacion",
         "activo",
     )
+
     ordering = ("-fecha_creacion",)
     list_per_page = 20
     readonly_fields = ("fecha_creacion",)
@@ -169,6 +200,7 @@ class ConsultaIAAdmin(admin.ModelAdmin):
     def pregunta_corta(self, obj):
         if obj.pregunta:
             return obj.pregunta[:70]
+
         return "Consulta general"
 
     pregunta_corta.short_description = "Pregunta"
@@ -182,16 +214,19 @@ class ActivoFavoritoAdmin(admin.ModelAdmin):
         "activo",
         "fecha_agregado",
     )
+
     search_fields = (
         "usuario__username",
         "usuario__email",
         "activo__nombre",
         "activo__simbolo",
     )
+
     list_filter = (
         "fecha_agregado",
         "activo",
     )
+
     ordering = ("-fecha_agregado",)
     list_per_page = 20
 
@@ -206,61 +241,103 @@ class NotificacionAdmin(admin.ModelAdmin):
         "leida_badge",
         "fecha_creacion",
     )
+
     search_fields = (
         "usuario__username",
         "usuario__email",
         "titulo",
         "mensaje",
     )
+
     list_filter = (
         "tipo",
         "leida",
         "fecha_creacion",
     )
+
     ordering = ("-fecha_creacion",)
     list_per_page = 30
+
     actions = (
         "marcar_como_leidas",
         "marcar_como_no_leidas",
         "exportar_notificaciones_csv",
     )
 
-    @admin.action(description="Marcar notificaciones como leídas")
+    @admin.action(
+        description="Marcar notificaciones como leídas"
+    )
     def marcar_como_leidas(self, request, queryset):
-        updated = queryset.update(leida=True)
-        self.message_user(request, f"{updated} notificación/es marcada/s como leídas.")
+        updated = queryset.update(
+            leida=True
+        )
 
-    @admin.action(description="Marcar notificaciones como no leídas")
+        self.message_user(
+            request,
+            (
+                f"{updated} notificación/es "
+                "marcada/s como leídas."
+            ),
+        )
+
+    @admin.action(
+        description="Marcar notificaciones como no leídas"
+    )
     def marcar_como_no_leidas(self, request, queryset):
-        updated = queryset.update(leida=False)
-        self.message_user(request, f"{updated} notificación/es marcada/s como no leídas.")
+        updated = queryset.update(
+            leida=False
+        )
 
-    @admin.action(description="Exportar notificaciones seleccionadas a CSV")
-    def exportar_notificaciones_csv(self, request, queryset):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="quantedge_notificaciones.csv"'
+        self.message_user(
+            request,
+            (
+                f"{updated} notificación/es "
+                "marcada/s como no leídas."
+            ),
+        )
+
+    @admin.action(
+        description="Exportar notificaciones seleccionadas a CSV"
+    )
+    def exportar_notificaciones_csv(
+        self,
+        request,
+        queryset,
+    ):
+        response = HttpResponse(
+            content_type="text/csv"
+        )
+
+        response["Content-Disposition"] = (
+            'attachment; filename="quantedge_notificaciones.csv"'
+        )
 
         writer = csv.writer(response)
-        writer.writerow([
-            "ID",
-            "Usuario",
-            "Tipo",
-            "Título",
-            "Mensaje",
-            "Leída",
-            "Fecha",
-        ])
 
-        for n in queryset:
-            writer.writerow([
-                n.id,
-                n.usuario.username,
-                n.get_tipo_display(),
-                n.titulo,
-                n.mensaje,
-                n.leida,
-                n.fecha_creacion,
-            ])
+        writer.writerow(
+            [
+                "ID",
+                "Usuario",
+                "Tipo",
+                "Título",
+                "Mensaje",
+                "Leída",
+                "Fecha",
+            ]
+        )
+
+        for notificacion in queryset:
+            writer.writerow(
+                [
+                    notificacion.id,
+                    notificacion.usuario.username,
+                    notificacion.get_tipo_display(),
+                    notificacion.titulo,
+                    notificacion.mensaje,
+                    notificacion.leida,
+                    notificacion.fecha_creacion,
+                ]
+            )
 
         return response
 
@@ -276,14 +353,21 @@ class NotificacionAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="background:{};" class="qe-badge-white">{}</span>',
             colores.get(obj.tipo, "#334155"),
-            obj.get_tipo_display()
+            obj.get_tipo_display(),
         )
 
     tipo_badge.short_description = "Tipo"
 
     def leida_badge(self, obj):
         if obj.leida:
-            return format_html('<span class="qe-neutral">Leída</span>')
-        return format_html('<span class="qe-positive">Nueva</span>')
+            return format_html(
+                '<span class="qe-neutral">{}</span>',
+                "Leída",
+            )
+
+        return format_html(
+            '<span class="qe-positive">{}</span>',
+            "Nueva",
+        )
 
     leida_badge.short_description = "Estado"

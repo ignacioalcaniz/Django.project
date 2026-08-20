@@ -153,3 +153,4 @@ staticfiles/
 .idea/
 .vscode/
 *.log
+.env
