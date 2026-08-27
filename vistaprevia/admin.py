@@ -11,7 +11,7 @@ from django.utils.html import format_html
 
 from .exceptions import MarketDataError
 from .models import Producto
-from .services.market_data import TwelveDataClient
+from .services.market_sync import MarketDataSyncService
 
 
 admin.site.site_header = "QuantEdge Admin | Inteligencia Bursátil"
@@ -113,6 +113,8 @@ class ProductoAdmin(admin.ModelAdmin):
         "precio_actual",
         "moneda",
         "variacion_coloreada",
+        "estado_sincronizacion_badge",
+        "fecha_ultima_sincronizacion",
         "riesgo_coloreado",
         "recomendacion_coloreada",
         "puntaje_quant_badge",
@@ -142,6 +144,7 @@ class ProductoAdmin(admin.ModelAdmin):
         "descripcion",
         "nota_analista",
         "tesis_inversion",
+        "ultimo_error_sincronizacion",
     )
 
     list_filter = (
@@ -151,10 +154,14 @@ class ProductoAdmin(admin.ModelAdmin):
         "moneda",
         "activo",
         "es_destacado",
+        "proveedor_datos",
+        "sincronizacion_automatica",
+        "estado_sincronizacion",
         "sector",
         "industria",
         "pais",
         "bolsa",
+        "fecha_ultima_sincronizacion",
         "fecha_creacion",
         "fecha_actualizacion",
         "fecha_ultima_revision",
@@ -171,12 +178,16 @@ class ProductoAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "preview_imagen",
+        "estado_sincronizacion",
+        "fecha_ultimo_intento_sincronizacion",
+        "fecha_ultima_sincronizacion",
+        "ultimo_error_sincronizacion",
         "fecha_creacion",
         "fecha_actualizacion",
     )
 
     actions = (
-        "sincronizar_cotizaciones_twelve_data",
+        "sincronizar_datos_mercado",
         "actualizar_analisis_intermedio",
         "marcar_como_destacados",
         "quitar_destacados",
@@ -205,9 +216,7 @@ class ProductoAdmin(admin.ModelAdmin):
                 "description": (
                     "El símbolo identifica al activo dentro de QuantEdge. "
                     "El ticker externo corresponde al identificador utilizado "
-                    "por el proveedor de datos de mercado. Para acciones "
-                    "estadounidenses en Twelve Data normalmente será, "
-                    "por ejemplo, AAPL, NVDA o TSLA."
+                    "por el proveedor de datos de mercado."
                 ),
             },
         ),
@@ -251,8 +260,8 @@ class ProductoAdmin(admin.ModelAdmin):
                     "volumen_promedio",
                 ),
                 "description": (
-                    "Estos campos pueden ser sincronizados "
-                    "desde el proveedor externo de datos."
+                    "Estos datos pueden ser actualizados mediante "
+                    "el subsistema de Market Data de QuantEdge."
                 ),
             },
         ),
@@ -270,6 +279,23 @@ class ProductoAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Integración de Market Data",
+            {
+                "fields": (
+                    "proveedor_datos",
+                    "sincronizacion_automatica",
+                    "estado_sincronizacion",
+                    "fecha_ultimo_intento_sincronizacion",
+                    "fecha_ultima_sincronizacion",
+                    "ultimo_error_sincronizacion",
+                ),
+                "description": (
+                    "Configuración y estado operativo de la integración "
+                    "con proveedores externos de datos financieros."
+                ),
+            },
+        ),
+        (
             "Análisis QuantEdge",
             {
                 "fields": (
@@ -282,9 +308,9 @@ class ProductoAdmin(admin.ModelAdmin):
                     "fecha_ultima_revision",
                 ),
                 "description": (
-                    "Estos campos pertenecen a la capa analítica "
-                    "propia de QuantEdge y no son reemplazados "
-                    "automáticamente por la API de mercado."
+                    "Estos campos corresponden a la capa analítica propia "
+                    "de QuantEdge y no son reemplazados por el proveedor "
+                    "externo de datos."
                 ),
             },
         ),
@@ -308,117 +334,82 @@ class ProductoAdmin(admin.ModelAdmin):
         ),
     )
 
+    # ============================================================
+    # MARKET DATA
+    # ============================================================
+
     @admin.action(
-        description="Sincronizar cotización desde Twelve Data"
+        description="Sincronizar datos de mercado seleccionados"
     )
-    def sincronizar_cotizaciones_twelve_data(
+    def sincronizar_datos_mercado(
         self,
         request,
         queryset,
     ):
         try:
-            client = TwelveDataClient()
+            service = MarketDataSyncService()
 
         except MarketDataError as exc:
             self.message_user(
                 request,
-                f"No fue posible iniciar Twelve Data: {exc}",
+                (
+                    "No fue posible iniciar el servicio "
+                    f"de mercado: {exc}"
+                ),
                 level=messages.ERROR,
             )
             return
 
-        actualizados = 0
-        errores = 0
+        resultados = service.sincronizar_queryset(
+            queryset,
+            force=True,
+        )
 
-        for activo in queryset:
-            ticker = (
-                activo.ticker_externo.strip()
-                if activo.ticker_externo
-                else activo.simbolo.strip()
-            )
+        exitosos = [
+            resultado
+            for resultado in resultados
+            if resultado.success
+        ]
 
-            if not ticker:
-                errores += 1
+        fallidos = [
+            resultado
+            for resultado in resultados
+            if not resultado.success
+        ]
 
-                self.message_user(
-                    request,
-                    (
-                        f"{activo.nombre}: "
-                        "no tiene ticker configurado."
-                    ),
-                    level=messages.WARNING,
-                )
-                continue
-
-            try:
-                quote = client.get_quote(ticker)
-
-                activo.precio_actual = quote.price
-                activo.apertura = quote.open_price
-                activo.cierre_anterior = quote.previous_close
-                activo.maximo_dia = quote.high
-                activo.minimo_dia = quote.low
-                activo.variacion_diaria = quote.percent_change
-                activo.volumen = quote.volume
-
-                if quote.exchange:
-                    activo.bolsa = quote.exchange
-
-                monedas_validas = dict(
-                    Producto.MONEDAS
-                )
-
-                if quote.currency in monedas_validas:
-                    activo.moneda = quote.currency
-
-                activo.save(
-                    update_fields=[
-                        "precio_actual",
-                        "apertura",
-                        "cierre_anterior",
-                        "maximo_dia",
-                        "minimo_dia",
-                        "variacion_diaria",
-                        "volumen",
-                        "bolsa",
-                        "moneda",
-                        "fecha_actualizacion",
-                    ]
-                )
-
-                actualizados += 1
-
-            except MarketDataError as exc:
-                errores += 1
-
-                self.message_user(
-                    request,
-                    (
-                        f"{activo.simbolo}: "
-                        f"no pudo sincronizarse. {exc}"
-                    ),
-                    level=messages.WARNING,
-                )
-
-        if actualizados:
+        if exitosos:
             self.message_user(
                 request,
                 (
-                    f"{actualizados} activo/s sincronizado/s "
-                    "correctamente con Twelve Data."
+                    f"{len(exitosos)} activo/s sincronizado/s "
+                    "correctamente con el proveedor de mercado."
                 ),
                 level=messages.SUCCESS,
             )
 
-        if errores:
+        for resultado in fallidos:
             self.message_user(
                 request,
                 (
-                    f"{errores} activo/s no pudieron "
+                    f"{resultado.simbolo}: "
+                    f"{resultado.message}"
+                ),
+                level=messages.WARNING,
+            )
+
+        if fallidos:
+            self.message_user(
+                request,
+                (
+                    f"{len(fallidos)} activo/s no pudieron "
                     "sincronizarse."
                 ),
                 level=messages.WARNING,
             )
+
+    # ============================================================
+    # PÁGINA INTERMEDIA DE ANÁLISIS
+    # ============================================================
 
     @admin.action(
         description="Actualizar análisis QuantEdge con confirmación"
@@ -500,9 +491,8 @@ class ProductoAdmin(admin.ModelAdmin):
                     request,
                     (
                         f"{actualizados} activo/s "
-                        "actualizado/s correctamente "
-                        "mediante la página intermedia "
-                        "de análisis."
+                        "actualizado/s correctamente mediante "
+                        "la página intermedia de análisis."
                     ),
                     level=messages.SUCCESS,
                 )
@@ -518,8 +508,8 @@ class ProductoAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Actualizar análisis QuantEdge",
             "subtitle": (
-                "Configurá los nuevos valores "
-                "antes de ejecutar la actualización masiva."
+                "Configurá los nuevos valores antes "
+                "de ejecutar la actualización masiva."
             ),
             "form": form,
             "queryset": queryset,
@@ -539,6 +529,10 @@ class ProductoAdmin(admin.ModelAdmin):
             ),
             context,
         )
+
+    # ============================================================
+    # ACCIONES OPERATIVAS
+    # ============================================================
 
     @admin.action(
         description="Marcar seleccionados como destacados"
@@ -613,6 +607,10 @@ class ProductoAdmin(admin.ModelAdmin):
             request,
             f"{updated} activo/s desactivado/s.",
         )
+
+    # ============================================================
+    # RECOMENDACIONES
+    # ============================================================
 
     @admin.action(
         description="Cambiar recomendación a Comprar"
@@ -694,6 +692,10 @@ class ProductoAdmin(admin.ModelAdmin):
             ),
         )
 
+    # ============================================================
+    # RIESGO
+    # ============================================================
+
     @admin.action(
         description="Cambiar riesgo a Bajo"
     )
@@ -754,6 +756,10 @@ class ProductoAdmin(admin.ModelAdmin):
             ),
         )
 
+    # ============================================================
+    # EXPORTACIÓN
+    # ============================================================
+
     @admin.action(
         description="Exportar activos seleccionados a CSV"
     )
@@ -788,6 +794,9 @@ class ProductoAdmin(admin.ModelAdmin):
                 "Variación diaria",
                 "Variación semanal",
                 "Variación mensual",
+                "Proveedor",
+                "Estado sincronización",
+                "Última sincronización",
                 "Riesgo",
                 "Recomendación",
                 "Score",
@@ -814,6 +823,9 @@ class ProductoAdmin(admin.ModelAdmin):
                     activo.variacion_diaria,
                     activo.variacion_semanal,
                     activo.variacion_mensual,
+                    activo.get_proveedor_datos_display(),
+                    activo.get_estado_sincronizacion_display(),
+                    activo.fecha_ultima_sincronizacion,
                     activo.get_riesgo_display(),
                     activo.get_recomendacion_display(),
                     activo.puntaje_quant,
@@ -824,6 +836,10 @@ class ProductoAdmin(admin.ModelAdmin):
             )
 
         return response
+
+    # ============================================================
+    # REPRESENTACIÓN VISUAL
+    # ============================================================
 
     def preview_imagen(self, obj):
         if obj and obj.imagen:
@@ -886,7 +902,9 @@ class ProductoAdmin(admin.ModelAdmin):
         valor_formateado = f"{valor:.2f}%"
 
         if valor > 0:
-            valor_formateado = f"+{valor_formateado}"
+            valor_formateado = (
+                f"+{valor_formateado}"
+            )
 
             return format_html(
                 '<span class="qe-positive">{}</span>',
@@ -905,6 +923,27 @@ class ProductoAdmin(admin.ModelAdmin):
         )
 
     variacion_coloreada.short_description = "Variación"
+
+    def estado_sincronizacion_badge(self, obj):
+        clases = {
+            "pendiente": "qe-warning",
+            "sincronizado": "qe-positive",
+            "error": "qe-negative",
+            "desactivado": "qe-neutral",
+        }
+
+        return format_html(
+            '<span class="{}">{}</span>',
+            clases.get(
+                obj.estado_sincronizacion,
+                "qe-neutral",
+            ),
+            obj.get_estado_sincronizacion_display(),
+        )
+
+    estado_sincronizacion_badge.short_description = (
+        "Market Data"
+    )
 
     def riesgo_coloreado(self, obj):
         clases = {

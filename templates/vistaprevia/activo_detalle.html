@@ -1,171 +1,826 @@
 {% extends "base.html" %}
+
 {% load static %}
 {% load quant_filters %}
 
-{% block title %}{{ activo.simbolo }} | QuantEdge{% endblock %}
+{% block title %}
+    {{ activo.simbolo }} | QuantEdge
+{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/activo_detalle.css' %}">
+<link
+    rel="stylesheet"
+    href="{% static 'css/activo_detalle.css' %}"
+>
 {% endblock %}
+
 
 {% block content %}
 
 <main class="asset-detail-page">
 
+    {# ========================================================= #}
+    {# DATOS SERIALIZADOS PARA CHART.JS                        #}
+    {# ========================================================= #}
+
+    {{ historical_labels|json_script:"historicalLabelsData" }}
+    {{ historical_prices|json_script:"historicalPricesData" }}
+    {{ historical_volumes|json_script:"historicalVolumesData" }}
+    {{ historical_sma_20|json_script:"historicalSma20Data" }}
+    {{ historical_sma_50|json_script:"historicalSma50Data" }}
+
+
+    {# ========================================================= #}
+    {# HERO DEL ACTIVO                                          #}
+    {# ========================================================= #}
+
     <section class="asset-hero">
+
         <div>
-            <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
+            <a
+                href="{% url 'dashboard' %}"
+                class="back-link"
+            >
+                ← Volver al dashboard
+            </a>
 
             <div class="asset-title-row">
+
                 {% if activo.imagen %}
-                    <img src="{{ activo.imagen.url }}" alt="{{ activo.nombre }}">
+                    <img
+                        src="{{ activo.imagen.url }}"
+                        alt="{{ activo.nombre }}"
+                    >
                 {% else %}
-                    <div class="asset-letter">{{ activo.simbolo|slice:":1" }}</div>
+                    <div class="asset-letter">
+                        {{ activo.simbolo|slice:":1" }}
+                    </div>
                 {% endif %}
 
                 <div>
-                    <span class="badge">{{ activo.get_tipo_activo_display }}</span>
-                    <h1>{{ activo.nombre }}</h1>
-                    <p>{{ activo.simbolo }} · {{ activo.bolsa }} · {{ activo.pais }}</p>
+                    <span class="badge">
+                        {{ activo.get_tipo_activo_display }}
+                    </span>
+
+                    <h1>
+                        {{ activo.nombre }}
+                    </h1>
+
+                    <p>
+                        {{ activo.simbolo }}
+                        ·
+                        {{ activo.bolsa }}
+                        ·
+                        {{ activo.pais }}
+                    </p>
                 </div>
+
             </div>
         </div>
 
+
         <div class="price-card">
-            <span>Precio actual</span>
-            <strong>{{ activo.moneda }} {{ activo.precio_actual }}</strong>
-            <p class="{% if activo.variacion_diaria > 0 %}positive{% elif activo.variacion_diaria < 0 %}negative{% else %}neutral{% endif %}">
-                {{ activo.variacion_diaria|percentage }} hoy
+
+            <span>
+                Precio actual
+            </span>
+
+            <strong>
+                {{ activo.moneda }}
+                {{ activo.precio_actual }}
+            </strong>
+
+            <p
+                class="
+                    {% if activo.variacion_diaria > 0 %}
+                        positive
+                    {% elif activo.variacion_diaria < 0 %}
+                        negative
+                    {% else %}
+                        neutral
+                    {% endif %}
+                "
+            >
+                {{ activo.variacion_diaria|percentage }}
+                hoy
             </p>
+
+            {% if activo.fecha_ultima_sincronizacion %}
+                <small>
+                    Última sincronización:
+                    {{ activo.fecha_ultima_sincronizacion|date:"d/m/Y H:i" }}
+                </small>
+            {% endif %}
+
         </div>
+
     </section>
+
+
+    {# ========================================================= #}
+    {# QUANTEDGE MARKET ANALYTICS                                #}
+    {# ========================================================= #}
+
+    <section class="historical-section">
+
+        <div class="historical-header">
+
+            <div>
+                <span>
+                    QuantEdge Market Analytics
+                </span>
+
+                <h2>
+                    Evolución histórica
+                </h2>
+
+                <p>
+                    Serie diaria almacenada por QuantEdge
+                    a partir de datos externos de mercado.
+                </p>
+            </div>
+
+            <div class="historical-source">
+
+                <span>
+                    Proveedor
+                </span>
+
+                <strong>
+                    {{ activo.get_proveedor_datos_display }}
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        {% if historical_analytics.observations %}
+
+            {# ================================================= #}
+            {# TARJETAS ANALÍTICAS                              #}
+            {# ================================================= #}
+
+            <div class="analytics-grid">
+
+                <article class="analytics-card">
+
+                    <span>
+                        Observaciones
+                    </span>
+
+                    <strong>
+                        {{ historical_analytics.observations }}
+                    </strong>
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Rentabilidad período
+                    </span>
+
+                    {% if historical_analytics.period_return is not None %}
+
+                        {% if historical_analytics.period_return >= 0 %}
+                            <strong class="positive">
+                                +{{ historical_analytics.period_return|floatformat:2 }}%
+                            </strong>
+                        {% else %}
+                            <strong class="negative">
+                                {{ historical_analytics.period_return|floatformat:2 }}%
+                            </strong>
+                        {% endif %}
+
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Volatilidad anualizada
+                    </span>
+
+                    {% if historical_analytics.annualized_volatility is not None %}
+                        <strong>
+                            {{ historical_analytics.annualized_volatility|floatformat:2 }}%
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Maximum Drawdown
+                    </span>
+
+                    {% if historical_analytics.max_drawdown is not None %}
+                        <strong class="negative">
+                            {{ historical_analytics.max_drawdown|floatformat:2 }}%
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        SMA 20
+                    </span>
+
+                    {% if historical_analytics.sma_20 is not None %}
+                        <strong>
+                            {{ activo.moneda }}
+                            {{ historical_analytics.sma_20|floatformat:2 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        SMA 50
+                    </span>
+
+                    {% if historical_analytics.sma_50 is not None %}
+                        <strong>
+                            {{ activo.moneda }}
+                            {{ historical_analytics.sma_50|floatformat:2 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        RSI 14
+                    </span>
+
+                    {% if historical_analytics.rsi_14 is not None %}
+                        <strong>
+                            {{ historical_analytics.rsi_14|floatformat:2 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Tendencia
+                    </span>
+
+                    <strong>
+                        {{ historical_analytics.trend }}
+                    </strong>
+
+                    <small>
+                        Fuerza:
+                        {{ historical_analytics.trend_strength }}
+                    </small>
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Máximo período
+                    </span>
+
+                    {% if historical_analytics.period_high is not None %}
+                        <strong>
+                            {{ activo.moneda }}
+                            {{ historical_analytics.period_high|floatformat:2 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Mínimo período
+                    </span>
+
+                    {% if historical_analytics.period_low is not None %}
+                        <strong>
+                            {{ activo.moneda }}
+                            {{ historical_analytics.period_low|floatformat:2 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+
+                <article class="analytics-card">
+
+                    <span>
+                        Volumen promedio
+                    </span>
+
+                    {% if historical_analytics.average_volume is not None %}
+                        <strong>
+                            {{ historical_analytics.average_volume|floatformat:0 }}
+                        </strong>
+                    {% else %}
+                        <strong>
+                            Sin datos
+                        </strong>
+                    {% endif %}
+
+                </article>
+
+            </div>
+
+
+            {# ================================================= #}
+            {# GRÁFICO HISTÓRICO                                #}
+            {# ================================================= #}
+
+            <div class="historical-chart-card">
+
+                <div class="chart-title">
+
+                    <div>
+                        <h3>
+                            Precio y medias móviles
+                        </h3>
+
+                        <p>
+                            Precio de cierre diario junto con
+                            SMA 20 y SMA 50.
+                        </p>
+                    </div>
+
+                    <span>
+                        {{ activo.simbolo }}
+                    </span>
+
+                </div>
+
+
+                <div class="historical-chart-box">
+
+                    <canvas
+                        id="historicalPriceChart"
+                        aria-label="Histórico de precios de {{ activo.simbolo }}"
+                        role="img"
+                    ></canvas>
+
+                </div>
+
+            </div>
+
+
+        {% else %}
+
+            <div class="historical-empty">
+
+                <h3>
+                    Todavía no hay histórico disponible
+                </h3>
+
+                <p>
+                    El activo todavía no posee suficientes
+                    cotizaciones almacenadas para generar
+                    análisis histórico.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    {# ========================================================= #}
+    {# INFORMACIÓN GENERAL                                      #}
+    {# ========================================================= #}
 
     <section class="detail-grid">
 
         <div class="main-panel">
+
+
+            {# ================================================= #}
+            {# SCORE ACTUAL                                     #}
+            {# ================================================= #}
+
             <div class="score-box">
-                <div>
-                    <span>Score QuantEdge</span>
-                    <strong>{{ activo.puntaje_quant }}/100</strong>
-                    <p>{{ activo.puntaje_quant|score_label }}</p>
-                </div>
 
                 <div>
-                    <span>Riesgo</span>
-                    <strong>{{ activo.riesgo|risk_label }}</strong>
-                    <p>Perfil sugerido: {{ activo.get_riesgo_display }}</p>
+
+                    <span>
+                        Score QuantEdge
+                    </span>
+
+                    <strong>
+                        {{ activo.puntaje_quant }}/100
+                    </strong>
+
+                    <p>
+                        {{ activo.puntaje_quant|score_label }}
+                    </p>
+
                 </div>
+
 
                 <div>
-                    <span>Recomendación</span>
-                    <strong>{{ activo.recomendacion|recommendation_label }}</strong>
-                    <p>Confianza modelo: {{ activo.confianza_modelo }}%</p>
+
+                    <span>
+                        Riesgo
+                    </span>
+
+                    <strong>
+                        {{ activo.riesgo|risk_label }}
+                    </strong>
+
+                    <p>
+                        Perfil sugerido:
+                        {{ activo.get_riesgo_display }}
+                    </p>
+
                 </div>
+
+
+                <div>
+
+                    <span>
+                        Recomendación
+                    </span>
+
+                    <strong>
+                        {{ activo.recomendacion|recommendation_label }}
+                    </strong>
+
+                    <p>
+                        Confianza modelo:
+                        {{ activo.confianza_modelo }}%
+                    </p>
+
+                </div>
+
             </div>
 
-            <div class="content-card">
-                <h2>Descripción</h2>
-                <p>{{ activo.descripcion }}</p>
-            </div>
+
+            {# ================================================= #}
+            {# DESCRIPCIÓN                                      #}
+            {# ================================================= #}
 
             <div class="content-card">
-                <h2>Tesis de inversión</h2>
-                <p>{{ activo.tesis_inversion|default:"Sin tesis cargada." }}</p>
+
+                <h2>
+                    Descripción
+                </h2>
+
+                <p>
+                    {{ activo.descripcion }}
+                </p>
+
             </div>
 
+
+            {# ================================================= #}
+            {# TESIS                                            #}
+            {# ================================================= #}
+
             <div class="content-card">
-                <h2>Nota del analista</h2>
-                <p>{{ activo.nota_analista|default:"Sin nota cargada." }}</p>
+
+                <h2>
+                    Tesis de inversión
+                </h2>
+
+                <p>
+                    {{ activo.tesis_inversion|default:"Sin tesis cargada." }}
+                </p>
+
             </div>
+
+
+            {# ================================================= #}
+            {# NOTA DEL ANALISTA                                #}
+            {# ================================================= #}
+
+            <div class="content-card">
+
+                <h2>
+                    Nota del analista
+                </h2>
+
+                <p>
+                    {{ activo.nota_analista|default:"Sin nota cargada." }}
+                </p>
+
+            </div>
+
         </div>
 
+
+        {# ===================================================== #}
+        {# PANEL LATERAL                                        #}
+        {# ===================================================== #}
+
         <aside class="side-panel">
+
+
+            {# ================================================= #}
+            {# OPERACIONES                                      #}
+            {# ================================================= #}
+
             <div class="action-card">
-                <h3>Operar activo</h3>
-                <p>Guardá este activo, realizá una compra simulada o pedí análisis IA personalizado.</p>
+
+                <h3>
+                    Operar activo
+                </h3>
+
+                <p>
+                    Guardá este activo, realizá una compra
+                    simulada o pedí análisis IA personalizado.
+                </p>
+
 
                 {% if request.user.is_authenticated %}
 
-                    <form method="post" action="{% url 'alternar_favorito' activo.id %}">
+                    <form
+                        method="post"
+                        action="{% url 'alternar_favorito' activo.id %}"
+                    >
                         {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.path }}">
+
+                        <input
+                            type="hidden"
+                            name="next"
+                            value="{{ request.path }}"
+                        >
 
                         {% if es_favorito %}
-                            <button type="submit" class="watchlist-btn remove">
+
+                            <button
+                                type="submit"
+                                class="watchlist-btn remove"
+                            >
                                 Quitar de watchlist
                             </button>
+
                         {% else %}
-                            <button type="submit" class="watchlist-btn">
+
+                            <button
+                                type="submit"
+                                class="watchlist-btn"
+                            >
                                 Agregar a watchlist
                             </button>
+
                         {% endif %}
+
                     </form>
 
-                    <form method="post" action="{% url 'comprar_activo' activo.id %}">
+
+                    <form
+                        method="post"
+                        action="{% url 'comprar_activo' activo.id %}"
+                    >
                         {% csrf_token %}
-                        <input type="number" name="cantidad" value="1" min="1">
-                        <button type="submit" class="buy-btn">Comprar simulado</button>
+
+                        <input
+                            type="number"
+                            name="cantidad"
+                            value="1"
+                            min="1"
+                        >
+
+                        <button
+                            type="submit"
+                            class="buy-btn"
+                        >
+                            Comprar simulado
+                        </button>
+
                     </form>
 
-                    <form method="post" action="{% url 'asesorar_activo' activo.id %}">
+
+                    <form
+                        method="post"
+                        action="{% url 'asesorar_activo' activo.id %}"
+                    >
                         {% csrf_token %}
-                        <input type="text" name="pregunta" placeholder="¿Conviene comprar hoy?">
-                        <button type="submit" class="ai-btn">Analizar con IA</button>
+
+                        <input
+                            type="text"
+                            name="pregunta"
+                            maxlength="500"
+                            placeholder="¿Conviene comprar hoy?"
+                        >
+
+                        <button
+                            type="submit"
+                            class="ai-btn"
+                        >
+                            Analizar con IA
+                        </button>
+
                     </form>
 
                 {% else %}
-                    <a href="{% url 'login' %}" class="login-action">Iniciar sesión</a>
+
+                    <a
+                        href="{% url 'login' %}"
+                        class="login-action"
+                    >
+                        Iniciar sesión
+                    </a>
+
                 {% endif %}
+
             </div>
 
+
+            {# ================================================= #}
+            {# MÉTRICAS CLAVE                                   #}
+            {# ================================================= #}
+
             <div class="metrics-card">
-                <h3>Métricas clave</h3>
+
+                <h3>
+                    Métricas clave
+                </h3>
 
                 {% for nombre, valor in metricas %}
+
                     <div class="metric-row">
-                        <span>{{ nombre }}</span>
-                        <strong>{{ valor|money }}</strong>
+
+                        <span>
+                            {{ nombre }}
+                        </span>
+
+                        <strong>
+                            {{ valor|money }}
+                        </strong>
+
                     </div>
+
                 {% endfor %}
+
             </div>
+
+
+            {# ================================================= #}
+            {# RANGO DE PRECIOS                                 #}
+            {# ================================================= #}
 
             <div class="metrics-card">
-                <h3>Rango de precios</h3>
+
+                <h3>
+                    Rango de precios
+                </h3>
+
 
                 <div class="metric-row">
-                    <span>Apertura</span>
-                    <strong>{{ activo.moneda }} {{ activo.apertura }}</strong>
+
+                    <span>
+                        Apertura
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.apertura }}
+                    </strong>
+
                 </div>
 
-                <div class="metric-row">
-                    <span>Cierre anterior</span>
-                    <strong>{{ activo.moneda }} {{ activo.cierre_anterior }}</strong>
-                </div>
 
                 <div class="metric-row">
-                    <span>Máximo día</span>
-                    <strong>{{ activo.moneda }} {{ activo.maximo_dia }}</strong>
+
+                    <span>
+                        Cierre anterior
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.cierre_anterior }}
+                    </strong>
+
                 </div>
 
-                <div class="metric-row">
-                    <span>Mínimo día</span>
-                    <strong>{{ activo.moneda }} {{ activo.minimo_dia }}</strong>
-                </div>
 
                 <div class="metric-row">
-                    <span>Máximo 52 semanas</span>
-                    <strong>{{ activo.moneda }} {{ activo.maximo_52_semanas }}</strong>
+
+                    <span>
+                        Máximo día
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.maximo_dia }}
+                    </strong>
+
                 </div>
 
+
                 <div class="metric-row">
-                    <span>Mínimo 52 semanas</span>
-                    <strong>{{ activo.moneda }} {{ activo.minimo_52_semanas }}</strong>
+
+                    <span>
+                        Mínimo día
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.minimo_dia }}
+                    </strong>
+
                 </div>
+
+
+                <div class="metric-row">
+
+                    <span>
+                        Máximo 52 semanas
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.maximo_52_semanas }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metric-row">
+
+                    <span>
+                        Mínimo 52 semanas
+                    </span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.minimo_52_semanas }}
+                    </strong>
+
+                </div>
+
             </div>
+
         </aside>
 
     </section>
 
 </main>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script
+    src="{% static 'js/activo_detalle.js' %}?v=2"
+></script>
 
 {% endblock %}

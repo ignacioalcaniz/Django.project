@@ -250,3 +250,183 @@
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, .35);
 }
+/* =========================================================
+   HISTORICAL MARKET ANALYTICS
+   ========================================================= */
+
+.historical-section {
+    margin: 30px 0;
+    padding: 28px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 24px;
+}
+
+.historical-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.historical-header > div:first-child > span {
+    color: #38bdf8;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.historical-header h2 {
+    margin: 8px 0;
+    font-size: 28px;
+}
+
+.historical-header p {
+    margin: 0;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
+.historical-source {
+    min-width: 160px;
+    padding: 14px 18px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+}
+
+.historical-source span {
+    display: block;
+    color: #94a3b8;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.historical-source strong {
+    color: #22c55e;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.analytics-card {
+    padding: 18px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+}
+
+.analytics-card span {
+    display: block;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.analytics-card strong {
+    display: block;
+    margin-top: 9px;
+    color: #f8fafc;
+    font-size: 22px;
+}
+
+.historical-chart-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+    padding: 22px;
+}
+
+.chart-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.chart-title h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.chart-title p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.chart-title > span {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, .12);
+    color: #38bdf8;
+    font-weight: 900;
+}
+
+.historical-chart-box {
+    position: relative;
+    height: 360px;
+    padding: 12px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+}
+
+.historical-empty {
+    padding: 28px;
+    text-align: center;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 18px;
+}
+
+.historical-empty h3 {
+    margin-top: 0;
+}
+
+.historical-empty p {
+    margin-bottom: 0;
+    color: #94a3b8;
+}
+
+.price-card small {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+@media (max-width: 900px) {
+    .historical-header {
+        flex-direction: column;
+    }
+
+    .historical-source {
+        width: 100%;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .historical-chart-box {
+        height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.analytics-card small {
+    display: block;
+    margin-top: 6px;
+    color: #94a3b8;
+    font-size: 12px;
+}

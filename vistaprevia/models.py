@@ -42,10 +42,6 @@ class Producto(models.Model):
         ("desactivado", "Desactivado"),
     ]
 
-    # ============================================================
-    # IDENTIDAD
-    # ============================================================
-
     nombre = models.CharField(
         max_length=120,
         verbose_name="Nombre del activo",
@@ -76,10 +72,6 @@ class Producto(models.Model):
         null=True,
         verbose_name="Imagen",
     )
-
-    # ============================================================
-    # PRECIOS
-    # ============================================================
 
     precio_actual = models.DecimalField(
         max_digits=12,
@@ -158,10 +150,6 @@ class Producto(models.Model):
         verbose_name="Mínimo 52 semanas",
     )
 
-    # ============================================================
-    # MERCADO / FUNDAMENTALES
-    # ============================================================
-
     volumen = models.PositiveBigIntegerField(
         default=0,
         verbose_name="Volumen",
@@ -207,10 +195,6 @@ class Producto(models.Model):
         verbose_name="Beta",
     )
 
-    # ============================================================
-    # CLASIFICACIÓN
-    # ============================================================
-
     sector = models.CharField(
         max_length=100,
         blank=True,
@@ -253,10 +237,6 @@ class Producto(models.Model):
         verbose_name="Tipo de activo",
     )
 
-    # ============================================================
-    # ANÁLISIS QUANTEDGE
-    # ============================================================
-
     riesgo = models.CharField(
         max_length=10,
         choices=NIVELES_RIESGO,
@@ -292,10 +272,6 @@ class Producto(models.Model):
         default="",
         verbose_name="Tesis de inversión",
     )
-
-    # ============================================================
-    # MARKET DATA / SINCRONIZACIÓN
-    # ============================================================
 
     proveedor_datos = models.CharField(
         max_length=30,
@@ -338,10 +314,6 @@ class Producto(models.Model):
         verbose_name="Último error de sincronización",
     )
 
-    # ============================================================
-    # ESTADO
-    # ============================================================
-
     es_destacado = models.BooleanField(
         default=False,
         verbose_name="Destacado",
@@ -351,10 +323,6 @@ class Producto(models.Model):
         default=True,
         verbose_name="Activo",
     )
-
-    # ============================================================
-    # AUDITORÍA
-    # ============================================================
 
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
@@ -397,11 +365,6 @@ class Producto(models.Model):
 
     @property
     def ticker_mercado(self):
-        """
-        Identificador utilizado para consultar el proveedor externo.
-
-        Si no existe ticker_externo, utiliza el símbolo interno.
-        """
         return (
             self.ticker_externo.strip()
             or self.simbolo.strip()
@@ -416,5 +379,130 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.simbolo} - {self.nombre}"
+
+
+class CotizacionHistorica(models.Model):
+    INTERVALOS = [
+        ("1min", "1 minuto"),
+        ("5min", "5 minutos"),
+        ("15min", "15 minutos"),
+        ("30min", "30 minutos"),
+        ("45min", "45 minutos"),
+        ("1h", "1 hora"),
+        ("2h", "2 horas"),
+        ("4h", "4 horas"),
+        ("1day", "1 día"),
+        ("1week", "1 semana"),
+        ("1month", "1 mes"),
+    ]
+
+    PROVEEDORES = [
+        ("twelve_data", "Twelve Data"),
+    ]
+
+    activo = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="cotizaciones_historicas",
+        verbose_name="Activo",
+    )
+
+    fecha_hora = models.DateTimeField(
+        verbose_name="Fecha y hora de cotización",
+    )
+
+    intervalo = models.CharField(
+        max_length=20,
+        choices=INTERVALOS,
+        default="1day",
+        verbose_name="Intervalo",
+    )
+
+    apertura = models.DecimalField(
+        max_digits=14,
+        decimal_places=6,
+        verbose_name="Apertura",
+    )
+
+    maximo = models.DecimalField(
+        max_digits=14,
+        decimal_places=6,
+        verbose_name="Máximo",
+    )
+
+    minimo = models.DecimalField(
+        max_digits=14,
+        decimal_places=6,
+        verbose_name="Mínimo",
+    )
+
+    cierre = models.DecimalField(
+        max_digits=14,
+        decimal_places=6,
+        verbose_name="Cierre",
+    )
+
+    volumen = models.PositiveBigIntegerField(
+        default=0,
+        verbose_name="Volumen",
+    )
+
+    proveedor = models.CharField(
+        max_length=30,
+        choices=PROVEEDORES,
+        default="twelve_data",
+        verbose_name="Proveedor",
+    )
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de creación",
+    )
+
+    class Meta:
+        verbose_name = "Cotización histórica"
+        verbose_name_plural = "Cotizaciones históricas"
+
+        ordering = [
+            "-fecha_hora",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "activo",
+                    "fecha_hora",
+                    "intervalo",
+                    "proveedor",
+                ],
+                name="qe_unique_historical_quote",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "activo",
+                    "fecha_hora",
+                ],
+                name="qe_hist_asset_date_idx",
+            ),
+            models.Index(
+                fields=[
+                    "activo",
+                    "intervalo",
+                    "fecha_hora",
+                ],
+                name="qe_hist_interval_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.activo.simbolo} | "
+            f"{self.fecha_hora} | "
+            f"{self.intervalo} | "
+            f"{self.cierre}"
+        )
 
     
