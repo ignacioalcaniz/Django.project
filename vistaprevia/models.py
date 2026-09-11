@@ -256,9 +256,36 @@ class Producto(models.Model):
         verbose_name="Puntaje QuantEdge",
     )
 
+    cobertura_datos_quant = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Cobertura de datos QuantEdge (%)",
+        help_text=(
+            "Representa la disponibilidad de datos históricos "
+            "utilizados por el motor cuantitativo. No representa "
+            "probabilidad de rendimiento futuro."
+        ),
+    )
+
+    fecha_ultimo_score_quant = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Último cálculo del score QuantEdge",
+    )
+
+    version_score_quant = models.CharField(
+        max_length=20,
+        blank=True,
+        default="v1",
+        verbose_name="Versión del motor QuantEdge",
+    )
+
     confianza_modelo = models.PositiveIntegerField(
         default=50,
         verbose_name="Confianza del modelo (%)",
+        help_text=(
+            "Reservado para la confianza de futuros modelos "
+            "predictivos o de inteligencia artificial."
+        ),
     )
 
     nota_analista = models.TextField(

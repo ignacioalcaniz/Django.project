@@ -1,9 +1,18 @@
 .asset-detail-page {
     padding: 54px;
     background:
-        radial-gradient(circle at top right, rgba(56, 189, 248, .12), transparent 35%),
+        radial-gradient(
+            circle at top right,
+            rgba(56, 189, 248, .12),
+            transparent 35%
+        ),
         #020617;
 }
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
 
 .back-link {
     color: #38bdf8;
@@ -12,6 +21,11 @@
     display: inline-block;
     margin-bottom: 22px;
 }
+
+
+/* =========================================================
+   ASSET HERO
+   ========================================================= */
 
 .asset-hero {
     display: flex;
@@ -41,7 +55,12 @@
 .asset-letter {
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    background:
+        linear-gradient(
+            135deg,
+            #38bdf8,
+            #22c55e
+        );
     color: #020617;
     font-size: 34px;
     font-weight: 900;
@@ -67,6 +86,11 @@
     margin: 8px 0 0;
 }
 
+
+/* =========================================================
+   GENERAL CARDS
+   ========================================================= */
+
 .price-card,
 .content-card,
 .action-card,
@@ -76,6 +100,11 @@
     border-radius: 22px;
     padding: 24px;
 }
+
+
+/* =========================================================
+   PRICE CARD
+   ========================================================= */
 
 .price-card {
     min-width: 310px;
@@ -93,6 +122,18 @@
     color: #f8fafc;
 }
 
+.price-card small {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   STATUS COLORS
+   ========================================================= */
+
 .positive {
     color: #22c55e;
     font-weight: 900;
@@ -108,6 +149,11 @@
     font-weight: 900;
 }
 
+
+/* =========================================================
+   MAIN DETAIL GRID
+   ========================================================= */
+
 .detail-grid {
     display: grid;
     grid-template-columns: 1.25fr .75fr;
@@ -119,6 +165,11 @@
     display: grid;
     gap: 22px;
 }
+
+
+/* =========================================================
+   SCORE SUMMARY
+   ========================================================= */
 
 .score-box {
     display: grid;
@@ -150,6 +201,11 @@
     margin: 0;
 }
 
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
 .content-card h2,
 .action-card h3,
 .metrics-card h3 {
@@ -162,6 +218,11 @@
     color: #cbd5e1;
     line-height: 1.65;
 }
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
 
 .action-card form {
     display: grid;
@@ -206,39 +267,6 @@
     color: #020617;
 }
 
-.metric-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    padding: 12px 0;
-    border-bottom: 1px solid #1e293b;
-}
-
-.metric-row span {
-    color: #94a3b8;
-}
-
-.metric-row strong {
-    color: #f8fafc;
-    text-align: right;
-}
-
-@media (max-width: 1000px) {
-    .asset-detail-page {
-        padding: 34px 24px;
-    }
-
-    .asset-hero,
-    .detail-grid,
-    .score-box {
-        grid-template-columns: 1fr;
-        display: grid;
-    }
-
-    .price-card {
-        min-width: auto;
-    }
-}
 .watchlist-btn {
     background: rgba(250, 204, 21, .15);
     color: #facc15;
@@ -250,6 +278,34 @@
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, .35);
 }
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.metric-row:last-child {
+    border-bottom: none;
+}
+
+.metric-row span {
+    color: #94a3b8;
+}
+
+.metric-row strong {
+    color: #f8fafc;
+    text-align: right;
+}
+
+
 /* =========================================================
    HISTORICAL MARKET ANALYTICS
    ========================================================= */
@@ -306,6 +362,11 @@
     color: #22c55e;
 }
 
+
+/* =========================================================
+   ANALYTICS CARDS
+   ========================================================= */
+
 .analytics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -333,6 +394,18 @@
     color: #f8fafc;
     font-size: 22px;
 }
+
+.analytics-card small {
+    display: block;
+    margin-top: 6px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   HISTORICAL CHART
+   ========================================================= */
 
 .historical-chart-card {
     background: #111827;
@@ -377,6 +450,11 @@
     border-radius: 16px;
 }
 
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
 .historical-empty {
     padding: 28px;
     text-align: center;
@@ -394,14 +472,169 @@
     color: #94a3b8;
 }
 
-.price-card small {
-    display: block;
-    margin-top: 8px;
-    color: #64748b;
-    font-size: 11px;
+
+/* =========================================================
+   QUANTEDGE SCORING ENGINE
+   ========================================================= */
+
+.quant-score-section {
+    margin: 30px 0;
+    padding: 28px;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(34, 197, 94, .08),
+            transparent 35%
+        ),
+        #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 24px;
 }
 
+
+/* =========================================================
+   SCORE BREAKDOWN
+   ========================================================= */
+
+.quant-score-breakdown {
+    margin-top: 22px;
+    padding: 22px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 20px;
+}
+
+.score-components-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+
+/* =========================================================
+   SCORE COMPONENT
+   ========================================================= */
+
+.score-component-card {
+    padding: 20px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 17px;
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        background .2s ease;
+}
+
+.score-component-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, .4);
+    background: #07101f;
+}
+
+.score-component-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.score-component-header > div > span {
+    display: block;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.score-component-header strong {
+    display: block;
+    margin-top: 7px;
+    color: #f8fafc;
+    font-size: 22px;
+}
+
+.score-component-percentage {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 54px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, .12);
+    border: 1px solid rgba(56, 189, 248, .18);
+    color: #38bdf8;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.score-component-card p {
+    margin: 14px 0 0;
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   SCORE PROGRESS
+   ========================================================= */
+
+.score-progress {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    margin-top: 15px;
+    overflow: hidden;
+    background: #111827;
+    border-radius: 999px;
+}
+
+.score-progress-bar {
+    height: 100%;
+    max-width: 100%;
+    border-radius: inherit;
+    background:
+        linear-gradient(
+            90deg,
+            #38bdf8,
+            #22c55e
+        );
+    transition: width .6s ease;
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .asset-detail-page {
+        padding: 34px 24px;
+    }
+
+    .asset-hero,
+    .detail-grid,
+    .score-box {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .price-card {
+        min-width: auto;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - ANALYTICS
+   ========================================================= */
+
 @media (max-width: 900px) {
+
     .historical-header {
         flex-direction: column;
     }
@@ -414,19 +647,67 @@
         grid-template-columns: 1fr 1fr;
     }
 
+    .score-components-grid {
+        grid-template-columns: 1fr;
+    }
+
     .historical-chart-box {
         height: 300px;
     }
+
 }
 
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
 @media (max-width: 600px) {
+
+    .asset-detail-page {
+        padding: 24px 16px;
+    }
+
+    .asset-title-row {
+        align-items: flex-start;
+    }
+
+    .asset-title-row img,
+    .asset-letter {
+        width: 64px;
+        height: 64px;
+        border-radius: 17px;
+    }
+
+    .asset-title-row h1 {
+        font-size: 30px;
+    }
+
     .analytics-grid {
         grid-template-columns: 1fr;
     }
-}
-.analytics-card small {
-    display: block;
-    margin-top: 6px;
-    color: #94a3b8;
-    font-size: 12px;
+
+    .historical-section,
+    .quant-score-section {
+        padding: 20px;
+    }
+
+    .historical-chart-card,
+    .quant-score-breakdown {
+        padding: 16px;
+    }
+
+    .chart-title {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .historical-chart-box {
+        height: 260px;
+    }
+
+    .score-component-header strong {
+        font-size: 20px;
+    }
+
 }

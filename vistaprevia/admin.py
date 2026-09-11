@@ -12,6 +12,7 @@ from django.utils.html import format_html
 from .exceptions import MarketDataError
 from .models import Producto
 from .services.market_sync import MarketDataSyncService
+from .services.score_sync import QuantEdgeScoreSyncService
 
 
 admin.site.site_header = "QuantEdge Admin | Inteligencia Bursátil"
@@ -118,6 +119,8 @@ class ProductoAdmin(admin.ModelAdmin):
         "riesgo_coloreado",
         "recomendacion_coloreada",
         "puntaje_quant_badge",
+        "cobertura_quant_badge",
+        "version_score_quant",
         "activo_coloreado",
         "destacado_coloreado",
     )
@@ -157,11 +160,13 @@ class ProductoAdmin(admin.ModelAdmin):
         "proveedor_datos",
         "sincronizacion_automatica",
         "estado_sincronizacion",
+        "version_score_quant",
         "sector",
         "industria",
         "pais",
         "bolsa",
         "fecha_ultima_sincronizacion",
+        "fecha_ultimo_score_quant",
         "fecha_creacion",
         "fecha_actualizacion",
         "fecha_ultima_revision",
@@ -182,12 +187,16 @@ class ProductoAdmin(admin.ModelAdmin):
         "fecha_ultimo_intento_sincronizacion",
         "fecha_ultima_sincronizacion",
         "ultimo_error_sincronizacion",
+        "cobertura_datos_quant",
+        "fecha_ultimo_score_quant",
+        "version_score_quant",
         "fecha_creacion",
         "fecha_actualizacion",
     )
 
     actions = (
         "sincronizar_datos_mercado",
+        "recalcular_scores_quant",
         "actualizar_analisis_intermedio",
         "marcar_como_destacados",
         "quitar_destacados",
@@ -302,15 +311,18 @@ class ProductoAdmin(admin.ModelAdmin):
                     "riesgo",
                     "recomendacion",
                     "puntaje_quant",
+                    "cobertura_datos_quant",
+                    "fecha_ultimo_score_quant",
+                    "version_score_quant",
                     "confianza_modelo",
                     "nota_analista",
                     "tesis_inversion",
                     "fecha_ultima_revision",
                 ),
                 "description": (
-                    "Estos campos corresponden a la capa analítica propia "
-                    "de QuantEdge y no son reemplazados por el proveedor "
-                    "externo de datos."
+                    "El score QuantEdge, su cobertura y versión provienen "
+                    "del motor cuantitativo. La confianza del modelo queda "
+                    "reservada para futuros modelos predictivos o de IA."
                 ),
             },
         ),
@@ -403,6 +415,81 @@ class ProductoAdmin(admin.ModelAdmin):
                 (
                     f"{len(fallidos)} activo/s no pudieron "
                     "sincronizarse."
+                ),
+                level=messages.WARNING,
+            )
+
+    # ============================================================
+    # QUANTEDGE SCORE
+    # ============================================================
+
+    @admin.action(
+        description="Recalcular QuantEdge Score seleccionado"
+    )
+    def recalcular_scores_quant(
+        self,
+        request,
+        queryset,
+    ):
+        service = QuantEdgeScoreSyncService(
+            interval="1day",
+            limit=100,
+        )
+
+        resultados = service.sincronizar_activos(
+            queryset.order_by("simbolo")
+        )
+
+        exitosos = [
+            resultado
+            for resultado in resultados
+            if resultado.success
+        ]
+
+        fallidos = [
+            resultado
+            for resultado in resultados
+            if not resultado.success
+        ]
+
+        for resultado in exitosos:
+            self.message_user(
+                request,
+                (
+                    f"{resultado.simbolo}: "
+                    f"Score {resultado.score}/100 | "
+                    f"Recomendación "
+                    f"{resultado.recommendation} | "
+                    f"Cobertura "
+                    f"{resultado.data_coverage}% | "
+                    f"Versión {resultado.version}."
+                ),
+                level=messages.SUCCESS,
+            )
+
+        for resultado in fallidos:
+            self.message_user(
+                request,
+                resultado.message,
+                level=messages.WARNING,
+            )
+
+        if exitosos:
+            self.message_user(
+                request,
+                (
+                    f"{len(exitosos)} score/s QuantEdge "
+                    "recalculado/s correctamente."
+                ),
+                level=messages.SUCCESS,
+            )
+
+        if fallidos:
+            self.message_user(
+                request,
+                (
+                    f"{len(fallidos)} activo/s no pudieron "
+                    "actualizar su score."
                 ),
                 level=messages.WARNING,
             )
@@ -799,7 +886,10 @@ class ProductoAdmin(admin.ModelAdmin):
                 "Última sincronización",
                 "Riesgo",
                 "Recomendación",
-                "Score",
+                "Score QuantEdge",
+                "Cobertura datos QuantEdge",
+                "Versión Score QuantEdge",
+                "Fecha último Score QuantEdge",
                 "Confianza modelo",
                 "Activo",
                 "Destacado",
@@ -829,6 +919,9 @@ class ProductoAdmin(admin.ModelAdmin):
                     activo.get_riesgo_display(),
                     activo.get_recomendacion_display(),
                     activo.puntaje_quant,
+                    activo.cobertura_datos_quant,
+                    activo.version_score_quant,
+                    activo.fecha_ultimo_score_quant,
                     activo.confianza_modelo,
                     activo.activo,
                     activo.es_destacado,
@@ -1007,6 +1100,29 @@ class ProductoAdmin(admin.ModelAdmin):
         )
 
     puntaje_quant_badge.short_description = "Score"
+
+    def cobertura_quant_badge(self, obj):
+        cobertura = obj.cobertura_datos_quant or 0
+
+        if cobertura >= 90:
+            clase = "qe-positive"
+
+        elif cobertura >= 70:
+            clase = "qe-blue"
+
+        elif cobertura >= 50:
+            clase = "qe-warning"
+
+        else:
+            clase = "qe-negative"
+
+        return format_html(
+            '<span class="{}">{}%</span>',
+            clase,
+            cobertura,
+        )
+
+    cobertura_quant_badge.short_description = "Cobertura"
 
     def activo_coloreado(self, obj):
         if obj.activo:

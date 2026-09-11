@@ -13,54 +13,181 @@
 <main class="ranking-page">
 
     <section class="ranking-hero">
-        <a href="{% url 'dashboard' %}" class="back-link">← Volver al dashboard</a>
-        <span class="badge">Ranking QuantEdge</span>
-        <h1>Top oportunidades según score, riesgo y confianza</h1>
-        <p>Una vista ordenada de los activos mejor posicionados dentro de la plataforma.</p>
+        <a href="{% url 'dashboard' %}" class="back-link">
+            ← Volver al dashboard
+        </a>
+
+        <span class="badge">
+            Ranking QuantEdge
+        </span>
+
+        <h1>
+            Ranking cuantitativo de oportunidades
+        </h1>
+
+        <p>
+            Los activos se ordenan según el QuantEdge Score calculado
+            por el motor cuantitativo de la plataforma.
+        </p>
     </section>
 
     <section class="ranking-list">
+
         {% for activo in activos %}
+
             <article class="ranking-card">
-                <div class="rank-number">#{{ forloop.counter }}</div>
+
+                <div class="rank-number">
+                    #{{ forloop.counter }}
+                </div>
 
                 <div class="rank-main">
-                    <h2>{{ activo.simbolo }}</h2>
-                    <p>{{ activo.nombre }}</p>
-                    <span>{{ activo.sector }} · {{ activo.bolsa }}</span>
+
+                    <div class="rank-symbol-row">
+                        <h2>{{ activo.simbolo }}</h2>
+
+                        {% if forloop.counter == 1 %}
+                            <span class="rank-top-badge">
+                                Top 1
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <p>
+                        {{ activo.nombre }}
+                    </p>
+
+                    <span>
+                        {{ activo.sector|default:"Sin sector" }}
+                        ·
+                        {{ activo.bolsa|default:"Sin bolsa" }}
+                    </span>
+
                 </div>
 
                 <div class="rank-metric">
-                    <span>Precio</span>
-                    <strong>{{ activo.moneda }} {{ activo.precio_actual }}</strong>
+
+                    <span>Precio actual</span>
+
+                    <strong>
+                        {{ activo.moneda }}
+                        {{ activo.precio_actual }}
+                    </strong>
+
+                    {% if activo.variacion_diaria is not None %}
+
+                        <small
+                            class="
+                                {% if activo.variacion_diaria > 0 %}
+                                    metric-positive
+                                {% elif activo.variacion_diaria < 0 %}
+                                    metric-negative
+                                {% endif %}
+                            "
+                        >
+                            {% if activo.variacion_diaria > 0 %}
+                                +
+                            {% endif %}
+
+                            {{ activo.variacion_diaria }}%
+                        </small>
+
+                    {% endif %}
+
                 </div>
 
                 <div class="rank-metric">
-                    <span>Score</span>
-                    <strong>{{ activo.puntaje_quant }}/100</strong>
-                    <small>{{ activo.puntaje_quant|score_label }}</small>
+
+                    <span>QuantEdge Score</span>
+
+                    <strong class="score-value">
+                        {{ activo.puntaje_quant }}/100
+                    </strong>
+
+                    <small>
+                        {{ activo.puntaje_quant|score_label }}
+                    </small>
+
                 </div>
 
                 <div class="rank-metric">
+
+                    <span>Cobertura</span>
+
+                    <strong>
+                        {{ activo.cobertura_datos_quant }}%
+                    </strong>
+
+                    <small>
+                        Datos disponibles
+                    </small>
+
+                </div>
+
+                <div class="rank-metric">
+
                     <span>Riesgo</span>
-                    <strong>{{ activo.riesgo|risk_label }}</strong>
+
+                    <strong>
+                        {{ activo.riesgo|risk_label }}
+                    </strong>
+
                 </div>
 
                 <div class="rank-metric">
+
                     <span>Recomendación</span>
-                    <strong>{{ activo.recomendacion|recommendation_label }}</strong>
+
+                    <strong>
+                        {{ activo.recomendacion|recommendation_label }}
+                    </strong>
+
+                    <small>
+                        Motor {{ activo.version_score_quant }}
+                    </small>
+
                 </div>
 
-                <a href="{% url 'activo_detalle' activo.id %}" class="rank-button">
-                    Ver activo
-                </a>
+                <div class="rank-actions">
+
+                    <a
+                        href="{% url 'activo_detalle' activo.id %}"
+                        class="rank-button"
+                    >
+                        Ver activo
+                    </a>
+
+                    {% if activo.fecha_ultimo_score_quant %}
+
+                        <small class="rank-date">
+                            Último score:
+                            {{ activo.fecha_ultimo_score_quant|date:"d/m/Y H:i" }}
+                        </small>
+
+                    {% endif %}
+
+                </div>
+
             </article>
+
         {% empty %}
+
             <div class="empty-ranking">
-                <h2>No hay activos cargados</h2>
-                <p>Agregá activos desde el panel admin.</p>
+
+                <h2>
+                    Todavía no hay activos con score calculado
+                </h2>
+
+                <p>
+                    Ejecutá el QuantEdge Scoring Engine desde el panel
+                    de administración o mediante el comando
+                    sincronizar_scores.
+                </p>
+
             </div>
+
         {% endfor %}
+
     </section>
 
 </main>

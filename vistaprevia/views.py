@@ -7,13 +7,18 @@ from .models import Producto
 from .services.analytics import (
     HistoricalAnalyticsService,
 )
+from .services.scoring import (
+    QuantEdgeScoringEngine,
+)
 
 
 class ActivoDetalleView(DetailView):
     model = Producto
+
     template_name = (
         "vistaprevia/activo_detalle.html"
     )
+
     context_object_name = "activo"
 
     def get_queryset(self):
@@ -82,29 +87,65 @@ class ActivoDetalleView(DetailView):
             analytics_service.build()
         )
 
-        context["historical_analytics"] = (
-            analytics
+        context[
+            "historical_analytics"
+        ] = analytics
+
+        context[
+            "historical_labels"
+        ] = analytics.labels
+
+        context[
+            "historical_prices"
+        ] = analytics.prices
+
+        context[
+            "historical_volumes"
+        ] = analytics.volumes
+
+        context[
+            "historical_sma_20"
+        ] = analytics.sma_20_series
+
+        context[
+            "historical_sma_50"
+        ] = analytics.sma_50_series
+
+        # ========================================================
+        # QUANTEDGE SCORING ENGINE
+        # ========================================================
+
+        scoring_engine = (
+            QuantEdgeScoringEngine(
+                activo,
+                interval="1day",
+                limit=100,
+            )
         )
 
-        context["historical_labels"] = (
-            analytics.labels
+        quant_score = (
+            scoring_engine.calculate()
         )
 
-        context["historical_prices"] = (
-            analytics.prices
-        )
+        context[
+            "quant_score"
+        ] = quant_score
 
-        context["historical_volumes"] = (
-            analytics.volumes
-        )
+        context[
+            "quant_score_components"
+        ] = quant_score.components
 
-        context["historical_sma_20"] = (
-    analytics.sma_20_series
-        )
+        context[
+            "quant_score_value"
+        ] = quant_score.rounded_score
 
-        context["historical_sma_50"] = (
-    analytics.sma_50_series
-        )
+        context[
+            "quant_recommendation"
+        ] = quant_score.recommendation
+
+        context[
+            "quant_confidence"
+        ] = quant_score.confidence
 
         # ========================================================
         # WATCHLIST
@@ -117,8 +158,11 @@ class ActivoDetalleView(DetailView):
                     activo=activo,
                 ).exists()
             )
+
         else:
-            context["es_favorito"] = False
+            context[
+                "es_favorito"
+            ] = False
 
         return context
 
@@ -126,8 +170,12 @@ class ActivoDetalleView(DetailView):
 def comparar_activos(request):
     activos = (
         Producto.objects
-        .filter(activo=True)
-        .order_by("nombre")
+        .filter(
+            activo=True
+        )
+        .order_by(
+            "nombre"
+        )
     )
 
     activo_1 = None
@@ -233,11 +281,13 @@ def comparar_activos(request):
 def ranking_activos(request):
     activos = (
         Producto.objects
-        .filter(activo=True)
+        .filter(
+            activo=True,
+            fecha_ultimo_score_quant__isnull=False,
+        )
         .order_by(
             "-puntaje_quant",
-            "-confianza_modelo",
-            "riesgo",
+            "-cobertura_datos_quant",
             "nombre",
         )
     )

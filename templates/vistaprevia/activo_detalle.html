@@ -37,12 +37,14 @@
     <section class="asset-hero">
 
         <div>
+
             <a
                 href="{% url 'dashboard' %}"
                 class="back-link"
             >
                 ← Volver al dashboard
             </a>
+
 
             <div class="asset-title-row">
 
@@ -57,7 +59,9 @@
                     </div>
                 {% endif %}
 
+
                 <div>
+
                     <span class="badge">
                         {{ activo.get_tipo_activo_display }}
                     </span>
@@ -73,9 +77,11 @@
                         ·
                         {{ activo.pais }}
                     </p>
+
                 </div>
 
             </div>
+
         </div>
 
 
@@ -126,6 +132,7 @@
         <div class="historical-header">
 
             <div>
+
                 <span>
                     QuantEdge Market Analytics
                 </span>
@@ -138,7 +145,9 @@
                     Serie diaria almacenada por QuantEdge
                     a partir de datos externos de mercado.
                 </p>
+
             </div>
+
 
             <div class="historical-source">
 
@@ -195,9 +204,11 @@
                         {% endif %}
 
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -210,13 +221,17 @@
                     </span>
 
                     {% if historical_analytics.annualized_volatility is not None %}
+
                         <strong>
                             {{ historical_analytics.annualized_volatility|floatformat:2 }}%
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -229,13 +244,17 @@
                     </span>
 
                     {% if historical_analytics.max_drawdown is not None %}
+
                         <strong class="negative">
                             {{ historical_analytics.max_drawdown|floatformat:2 }}%
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -248,14 +267,18 @@
                     </span>
 
                     {% if historical_analytics.sma_20 is not None %}
+
                         <strong>
                             {{ activo.moneda }}
                             {{ historical_analytics.sma_20|floatformat:2 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -268,14 +291,18 @@
                     </span>
 
                     {% if historical_analytics.sma_50 is not None %}
+
                         <strong>
                             {{ activo.moneda }}
                             {{ historical_analytics.sma_50|floatformat:2 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -288,13 +315,17 @@
                     </span>
 
                     {% if historical_analytics.rsi_14 is not None %}
+
                         <strong>
                             {{ historical_analytics.rsi_14|floatformat:2 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -325,14 +356,18 @@
                     </span>
 
                     {% if historical_analytics.period_high is not None %}
+
                         <strong>
                             {{ activo.moneda }}
                             {{ historical_analytics.period_high|floatformat:2 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -345,14 +380,18 @@
                     </span>
 
                     {% if historical_analytics.period_low is not None %}
+
                         <strong>
                             {{ activo.moneda }}
                             {{ historical_analytics.period_low|floatformat:2 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -365,13 +404,17 @@
                     </span>
 
                     {% if historical_analytics.average_volume is not None %}
+
                         <strong>
                             {{ historical_analytics.average_volume|floatformat:0 }}
                         </strong>
+
                     {% else %}
+
                         <strong>
                             Sin datos
                         </strong>
+
                     {% endif %}
 
                 </article>
@@ -388,6 +431,7 @@
                 <div class="chart-title">
 
                     <div>
+
                         <h3>
                             Precio y medias móviles
                         </h3>
@@ -396,6 +440,7 @@
                             Precio de cierre diario junto con
                             SMA 20 y SMA 50.
                         </p>
+
                     </div>
 
                     <span>
@@ -440,6 +485,201 @@
 
 
     {# ========================================================= #}
+    {# QUANTEDGE SCORING ENGINE                                  #}
+    {# ========================================================= #}
+
+    <section class="quant-score-section">
+
+        <div class="historical-header">
+
+            <div>
+
+                <span>
+                    QuantEdge Scoring Engine
+                </span>
+
+                <h2>
+                    Evaluación cuantitativa
+                </h2>
+
+                <p>
+                    Score calculado automáticamente a partir
+                    de tendencias, momentum, riesgo,
+                    rendimiento y liquidez.
+                </p>
+
+            </div>
+
+            <div class="historical-source">
+
+                <span>
+                    Motor
+                </span>
+
+                <strong>
+                    QuantEdge
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        {% if quant_score_components %}
+
+            <div class="score-box">
+
+                <div>
+
+                    <span>
+                        QuantEdge Score
+                    </span>
+
+                    <strong>
+                        {{ quant_score_value }}/100
+                    </strong>
+
+                    <p>
+                        {{ quant_score_value|score_label }}
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Recomendación
+                    </span>
+
+                    <strong>
+                        {{ quant_recommendation }}
+                    </strong>
+
+                    <p>
+                        Resultado del motor cuantitativo
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Cobertura de datos
+                    </span>
+
+                    <strong>
+                        {{ quant_confidence|floatformat:0 }}%
+                    </strong>
+
+                    <p>
+                        Basada en disponibilidad histórica
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="quant-score-breakdown">
+
+                <div class="chart-title">
+
+                    <div>
+
+                        <h3>
+                            Desglose del QuantEdge Score
+                        </h3>
+
+                        <p>
+                            Cada componente aporta una parte
+                            del puntaje final.
+                        </p>
+
+                    </div>
+
+                    <span>
+                        {{ quant_score_value }}/100
+                    </span>
+
+                </div>
+
+
+                <div class="score-components-grid">
+
+                    {% for component in quant_score_components %}
+
+                        <article class="score-component-card">
+
+                            <div class="score-component-header">
+
+                                <div>
+
+                                    <span>
+                                        {{ component.name }}
+                                    </span>
+
+                                    <strong>
+                                        {{ component.score|floatformat:1 }}
+                                        /
+                                        {{ component.max_score|floatformat:0 }}
+                                    </strong>
+
+                                </div>
+
+
+                                <span class="score-component-percentage">
+                                    {{ component.percentage|floatformat:0 }}%
+                                </span>
+
+                            </div>
+
+
+                            <div class="score-progress">
+
+                                <div
+                                    class="score-progress-bar"
+                                    style="width: {{ component.percentage|floatformat:0 }}%;"
+                                ></div>
+
+                            </div>
+
+
+                            <p>
+                                {{ component.explanation }}
+                            </p>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="historical-empty">
+
+                <h3>
+                    Datos insuficientes para calcular el score
+                </h3>
+
+                <p>
+                    QuantEdge necesita un mínimo de datos
+                    históricos antes de generar una evaluación
+                    cuantitativa confiable.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    {# ========================================================= #}
     {# INFORMACIÓN GENERAL                                      #}
     {# ========================================================= #}
 
@@ -449,7 +689,7 @@
 
 
             {# ================================================= #}
-            {# SCORE ACTUAL                                     #}
+            {# PERFIL DEL ACTIVO                                #}
             {# ================================================= #}
 
             <div class="score-box">
@@ -461,11 +701,11 @@
                     </span>
 
                     <strong>
-                        {{ activo.puntaje_quant }}/100
+                        {{ quant_score_value }}/100
                     </strong>
 
                     <p>
-                        {{ activo.puntaje_quant|score_label }}
+                        {{ quant_score_value|score_label }}
                     </p>
 
                 </div>
@@ -496,12 +736,12 @@
                     </span>
 
                     <strong>
-                        {{ activo.recomendacion|recommendation_label }}
+                        {{ quant_recommendation }}
                     </strong>
 
                     <p>
-                        Confianza modelo:
-                        {{ activo.confianza_modelo }}%
+                        Cobertura de datos:
+                        {{ quant_confidence|floatformat:0 }}%
                     </p>
 
                 </div>
@@ -820,7 +1060,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script
-    src="{% static 'js/activo_detalle.js' %}?v=2"
+    src="{% static 'js/activo_detalle.js' %}?v=3"
 ></script>
 
 {% endblock %}
