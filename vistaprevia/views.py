@@ -209,66 +209,10 @@ def comparar_activos(request):
             .first()
         )
 
-    metricas = [
-        (
-            "Precio actual",
-            "precio_actual",
-        ),
-        (
-            "Score QuantEdge",
-            "puntaje_quant",
-        ),
-        (
-            "Riesgo",
-            "riesgo",
-        ),
-        (
-            "Recomendación",
-            "recomendacion",
-        ),
-        (
-            "Variación diaria",
-            "variacion_diaria",
-        ),
-        (
-            "Variación semanal",
-            "variacion_semanal",
-        ),
-        (
-            "Variación mensual",
-            "variacion_mensual",
-        ),
-        (
-            "P/E Ratio",
-            "pe_ratio",
-        ),
-        (
-            "EPS",
-            "eps",
-        ),
-        (
-            "Beta",
-            "beta",
-        ),
-        (
-            "Dividendo",
-            "dividendo",
-        ),
-        (
-            "Capitalización",
-            "capitalizacion_mercado",
-        ),
-        (
-            "Volumen",
-            "volumen",
-        ),
-    ]
-
     contexto = {
         "activos": activos,
         "activo_1": activo_1,
         "activo_2": activo_2,
-        "metricas": metricas,
     }
 
     return render(
@@ -276,7 +220,6 @@ def comparar_activos(request):
         "vistaprevia/comparador.html",
         contexto,
     )
-
 
 def ranking_activos(request):
     activos = (
