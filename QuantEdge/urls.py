@@ -13,6 +13,9 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("contacto/", include("contacto.urls")),
     path("captcha/", include("captcha.urls")),
+
+    # QuantEdge REST API
+    path("api/v1/", include("api.urls")),
 ]
 
 
