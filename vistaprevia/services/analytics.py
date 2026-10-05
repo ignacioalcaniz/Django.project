@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from math import sqrt
+from math import sqrt, isfinite
 from statistics import pstdev
 
 from vistaprevia.models import (
@@ -64,7 +64,7 @@ class HistoricalAnalyticsService:
         self.interval = interval
 
         self.limit = max(
-            2,
+            1,
             min(int(limit), 5000),
         )
 
@@ -75,8 +75,11 @@ class HistoricalAnalyticsService:
                 activo=self.activo,
                 intervalo=self.interval,
             )
-            .order_by("-fecha_hora")[:self.limit]
+            .order_by("-fecha_hora", "-id")[:self.limit]
         )
+
+        # Reject corrupt observations at the calculation boundary, preserving alignment.
+        cotizaciones = [row for row in cotizaciones if isfinite(float(row.cierre)) and row.cierre > 0]
 
         # Para cálculos financieros necesitamos
         # orden temporal ascendente.
@@ -341,7 +344,7 @@ class HistoricalAnalyticsService:
         )
 
         if promedio_perdidas == 0:
-            return 100.0
+            return 50.0 if promedio_ganancias == 0 else 100.0
 
         relative_strength = (
             promedio_ganancias

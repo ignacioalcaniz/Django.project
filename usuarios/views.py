@@ -1,3 +1,4 @@
+from django.utils.http import url_has_allowed_host_and_scheme
 from decimal import Decimal
 
 from django.contrib import messages
@@ -7,10 +8,11 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from vistaprevia.models import Producto
 
+from .services.inversiones import PortfolioService
 from .forms import PerfilUsuarioForm, RegistroUsuarioForm
 from .models import (
     ActivoFavorito,
@@ -48,6 +50,8 @@ def registro(request):
     )
 
 
+@login_required
+@require_POST
 def cerrar_sesion(request):
     logout(request)
     return redirect("home")
@@ -449,7 +453,7 @@ def dashboard(request):
 
     inversiones = list(
         InversionSimulada.objects
-        .filter(usuario=request.user)
+        .filter(usuario=request.user, activa=True)
         .select_related("activo")
         .order_by("-fecha_compra")
     )
@@ -670,7 +674,7 @@ def comprar_activo(request, activo_id):
 
     cantidad = max(1, min(cantidad, 100000))
 
-    InversionSimulada.objects.create(
+    PortfolioService.crear(
         usuario=request.user,
         activo=activo,
         cantidad=cantidad,
@@ -779,6 +783,8 @@ def alternar_favorito(request, activo_id):
         "dashboard",
     )
 
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        next_url = "dashboard"
     return redirect(next_url)
 
 

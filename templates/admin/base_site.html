@@ -23,7 +23,7 @@
     <span>Bienvenido/a, <strong>{{ user.username }}</strong></span>
     <a href="/">Ver sitio</a>
     <a href="{% url 'admin:password_change' %}">Cambiar contraseña</a>
-    <a href="{% url 'admin:logout' %}">Cerrar sesión</a>
+    <form method="post" action="{% url 'admin:logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:0;font:inherit;color:inherit;cursor:pointer">Cerrar sesión</button></form>
 </div>
 {% endblock %}
 

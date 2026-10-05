@@ -170,14 +170,18 @@ class ProductoSerializer(serializers.ModelSerializer):
 
         minimo_52 = attrs.get(
             "minimo_52_semanas",
-            getattr(instance, "minimo_52_semanas", None),
+            getattr(instance, "minimo_52_semanas", 0),
         )
 
         maximo_52 = attrs.get(
             "maximo_52_semanas",
-            getattr(instance, "maximo_52_semanas", None),
+            getattr(instance, "maximo_52_semanas", 0),
         )
 
+        for field, value in (("minimo_52_semanas", minimo_52), ("maximo_52_semanas", maximo_52)):
+            if value < 0:
+                raise serializers.ValidationError({field: "No puede ser negativo."})
+        # Zero means unknown. A positive minimum requires a known maximum.
         if (
             minimo_52 is not None
             and maximo_52 is not None
@@ -192,6 +196,11 @@ class ProductoSerializer(serializers.ModelSerializer):
                 }
             )
 
+        if instance is not None and not instance.activo and attrs.get("activo"):
+            if (not instance.ticker_mercado or instance.precio_actual <= 0
+                    or instance.estado_sincronizacion != "sincronizado"
+                    or instance.fecha_ultima_sincronizacion is None):
+                raise serializers.ValidationError({"activo": "Sincroniza una cotizacion valida antes de publicar."})
         return attrs
 
     def validate_precio_objetivo(self, value):

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Checkout de prueba | QuantEdge{% endblock %}
+{% block content %}
+<section class="container py-5" style="max-width:820px">
+  <h1>Probar Checkout Mercado Pago</h1>
+  <div class="alert alert-info">Entorno de prueba. Este pago no representa la compra real de instrumentos financieros.</div>
+  <h2>{{ activo.nombre }} ({{ activo.simbolo }})</h2>
+  <p>Cotización simulada por unidad: {{ activo.moneda }} {{ activo.precio_actual|floatformat:2 }}.</p>
+  {% if disabled %}
+    <p role="status">El checkout de prueba todavía no esta habilitado. Podés continuar simulando inversiones.</p>
+  {% else %}
+    <p>Importe de demostración: <strong>ARS {{ importe_demo|floatformat:2 }}</strong>, independiente de la cantidad. No es una conversión del valor financiero.</p>
+    <form method="post" data-prevent-double-submit>{% csrf_token %}{{ form.as_p }}
+      <button class="btn btn-primary" type="submit">Ver resumen de la orden</button>
+    </form>
+  {% endif %}
+  <p class="mt-4"><a href="{% url 'dashboard' %}">Volver al simulador</a> ? <a href="{% url 'pagos:historial' %}">Historial de pagos de prueba</a></p>
+</section>
+{% endblock %}
+{% block extra_js %}{% load static %}<script src="{% static 'js/pagos.js' %}" defer></script>{% endblock %}

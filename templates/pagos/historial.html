@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Historial de pagos de prueba | QuantEdge{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <h1>Historial de pagos de prueba</h1>
+  <p>Operaciones demo en ARS. No representan compras reales de activos ni conversiónes de moneda.</p>
+  <div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Activo</th><th>Valor financiero simulado</th><th>Demo ARS</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>
+  {% for orden in ordenes %}<tr><td>{{ orden.creada }}</td><td>{{ orden.simbolo_snapshot }}</td><td>{{ orden.moneda_activo }} {{ orden.total_financiero|floatformat:2 }}</td><td>{{ orden.importe_demo|floatformat:2 }}</td><td>{{ orden.get_estado_display }}</td><td><a href="{{ orden.get_absolute_url }}">Ver orden</a></td></tr>
+  {% empty %}<tr><td colspan="6">Todavía no hay operaciónes de prueba.</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if ordenes.has_previous %}<a href="?page={{ ordenes.previous_page_number }}">Anterior</a>{% endif %}
+  {% if ordenes.has_next %}<a href="?page={{ ordenes.next_page_number }}">Siguiente</a>{% endif %}
+  <p><a href="{% url 'dashboard' %}">Volver al simulador</a></p>
+</section>
+{% endblock %}

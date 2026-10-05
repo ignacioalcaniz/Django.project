@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 
 # ============================================================
@@ -21,18 +22,27 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY
 # ============================================================
 
+DEBUG = os.getenv("DJANGO_DEBUG", "False").strip().lower() == "true"
+
 SECRET_KEY = (
     os.getenv("DJANGO_SECRET_KEY")
     or "django-insecure-wxyz%!sqilxeg)8nx*9hcz8w2x-t37@9rq+%p_xfbg06pqj%hg"
 )
-
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
     if host.strip()
 ]
+
+
+if not DEBUG:
+    for variable in ("DJANGO_SECRET_KEY", "DJANGO_ALLOWED_HOSTS", "DB_PASSWORD"):
+        value = os.getenv(variable, "").strip()
+        if not value or value.startswith("REEMPLAZAR_"):
+            raise ImproperlyConfigured(f"{variable} must be configured when DJANGO_DEBUG=False.")
+    if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
+        raise ImproperlyConfigured("Configure explicit DJANGO_ALLOWED_HOSTS for production.")
 
 
 # ============================================================
@@ -46,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
 
     # Third-party
     "rest_framework",
@@ -54,6 +65,7 @@ INSTALLED_APPS = [
     # QuantEdge
     "vistaprevia.apps.VistapreviaConfig",
     "usuarios.apps.UsuariosConfig",
+    "pagos.apps.PagosConfig",
     "core.apps.CoreConfig",
     "contacto.apps.ContactoConfig",
     "api.apps.ApiConfig",
@@ -104,6 +116,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.admin_metrics",
+                "core.context_processors.seo",
             ],
         },
     },
@@ -130,7 +143,7 @@ DATABASES = {
 
         "PASSWORD": os.getenv(
             "DB_PASSWORD",
-            "123456",
+            "123456" if DEBUG else "",
         ),
 
         "HOST": os.getenv(
@@ -145,6 +158,8 @@ DATABASES = {
 
         "OPTIONS": {
             "charset": "utf8mb4",
+            **({"init_command": "SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'STRICT_TRANS_TABLES')"}
+               if os.getenv("DB_STRICT_MODE", "True").lower() == "true" else {}),
         },
     }
 }
@@ -201,6 +216,8 @@ USE_TZ = False
 
 STATIC_URL = "/static/"
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STATICFILES_DIRS = [
     BASE_DIR / "static_dev",
 ]
@@ -247,6 +264,11 @@ REST_FRAMEWORK = {
     ),
 
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_RATES": {"quantitative": "120/min"},
+    # Never trust client-supplied X-Forwarded-For for rate-limit identity.
+    # Behind the local proxy anonymous requests share its budget; authenticated
+    # requests are scoped by user. LocMem counters remain per worker.
+    "NUM_PROXIES": 0,
 
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -283,3 +305,11 @@ TWELVE_DATA_TIMEOUT = int(
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# Checkout Pro demo: disabled until explicitly configured, production forbidden.
+MERCADOPAGO_ENABLED = os.getenv("MERCADOPAGO_ENABLED", "False").lower() == "true"
+MERCADOPAGO_ENVIRONMENT = os.getenv("MERCADOPAGO_ENVIRONMENT", "test")
+MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
+MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
+MERCADOPAGO_PUBLIC_BASE_URL = os.getenv("MERCADOPAGO_PUBLIC_BASE_URL", "")
+MERCADOPAGO_DEMO_AMOUNT_ARS = os.getenv("MERCADOPAGO_DEMO_AMOUNT_ARS", "")

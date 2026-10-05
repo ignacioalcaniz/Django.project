@@ -1,7 +1,14 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Producto(models.Model):
+    def get_absolute_url(self):
+        return reverse(
+            "activo_detalle",
+            kwargs={"pk": self.pk},
+        )
+
     TIPOS_ACTIVO = [
         ("accion", "Acción"),
         ("etf", "ETF"),
@@ -531,5 +538,3 @@ class CotizacionHistorica(models.Model):
             f"{self.intervalo} | "
             f"{self.cierre}"
         )
-
-    

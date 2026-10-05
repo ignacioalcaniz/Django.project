@@ -9,8 +9,8 @@ class ProductoPermission(BasePermission):
     autenticación, condición de staff y el permiso
     Django correspondiente.
 
-    DELETE no se resuelve aquí porque el ViewSet
-    no implementa DestroyModelMixin.
+    DELETE nunca recibe permiso. El ViewSet lo rechaza con 405
+    antes de evaluar permisos, incluso si se agrega un mixin.
     """
 
     message = (
@@ -26,12 +26,6 @@ class ProductoPermission(BasePermission):
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
-            return True
-
-        # DELETE no forma parte de las operaciones
-        # implementadas por ProductoViewSet.
-        # Permitimos que DRF continúe para que responda 405.
-        if request.method == "DELETE":
             return True
 
         required_permission = self.permission_map.get(

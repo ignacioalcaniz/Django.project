@@ -1,3 +1,4 @@
+from decimal import Decimal
 from dataclasses import dataclass
 
 from django.db import transaction
@@ -40,7 +41,7 @@ class MarketDataSyncService:
         ahora = timezone.now()
         ticker = activo.ticker_mercado
 
-        if not activo.activo:
+        if not activo.activo and not force:
             return MarketSyncResult(
                 activo_id=activo.pk,
                 simbolo=activo.simbolo,
@@ -79,6 +80,9 @@ class MarketDataSyncService:
 
         try:
             quote = self.client.get_quote(ticker)
+            values = [quote.price, quote.open_price, quote.previous_close, quote.high, quote.low, quote.percent_change, quote.volume]
+            if not all(Decimal(str(value)).is_finite() for value in values):
+                raise MarketDataError("Datos de mercado no finitos.")
 
         except MarketDataError as exc:
             return self._registrar_error(

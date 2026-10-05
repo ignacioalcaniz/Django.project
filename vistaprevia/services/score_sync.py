@@ -1,3 +1,4 @@
+from math import isfinite
 from dataclasses import dataclass
 
 from django.db import transaction
@@ -187,6 +188,8 @@ class QuantEdgeScoreSyncService:
         Garantiza un entero comprendido entre 0 y 100.
         """
 
+        if not isfinite(value):
+            raise ValueError("El score debe ser finito.")
         return max(
             0,
             min(

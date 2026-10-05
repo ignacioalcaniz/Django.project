@@ -1,3 +1,4 @@
+from decimal import Decimal
 from dataclasses import dataclass
 
 from django.db import transaction
@@ -45,10 +46,11 @@ class HistoricalMarketDataService:
         *,
         interval: str = "1day",
         outputsize: int = 100,
+        force: bool = False,
     ) -> HistoricalSyncResult:
         ticker = activo.ticker_mercado
 
-        if not activo.activo:
+        if not activo.activo and not force:
             return HistoricalSyncResult(
                 activo_id=activo.pk,
                 simbolo=activo.simbolo,
@@ -97,6 +99,11 @@ class HistoricalMarketDataService:
                 actualizadas=0,
                 message=str(exc),
             )
+
+        if any(not Decimal(str(value)).is_finite() for barra in barras
+               for value in (barra.open_price, barra.high, barra.low, barra.close, barra.volume)):
+            return HistoricalSyncResult(activo.pk, activo.simbolo, ticker, interval, False, len(barras), 0, 0,
+                                        "Datos historicos no finitos.")
 
         creadas = 0
         actualizadas = 0

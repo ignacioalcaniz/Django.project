@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Orden de prueba | QuantEdge{% endblock %}
+{% block content %}
+<section class="container py-5" style="max-width:820px">
+  <h1>Orden de prueba</h1>
+  <p class="text-break">{{ orden.id }}</p>
+  <div class="alert alert-info">Este pago de prueba no representa la compra real del instrumento financiero.</div>
+  <h2>Cotización simulada</h2>
+  <p>{{ orden.cantidad }} ? {{ orden.simbolo_snapshot }} {{ orden.moneda_activo }} {{ orden.precio_unitario|floatformat:2 }} = <strong>{{ orden.moneda_activo }} {{ orden.total_financiero|floatformat:2 }}</strong></p>
+  <h2>Checkout Mercado Pago</h2>
+  <p>Importe de demostración: <strong>ARS {{ orden.importe_demo|floatformat:2 }}</strong>. No es una conversión de moneda.</p>
+  <p>Estado verificado por QuantEdge: <strong data-payment-status data-status-url="{% url 'pagos:estado' orden.pk %}">{{ orden.get_estado_display }}</strong></p>
+  {% if orden.inversion_id %}<p>Operacion simulada registrada. Los reembolsos totales se conservan en el historial y se excluyen de posiciones activas.</p>{% endif %}
+  {% if orden.puede_iniciar %}<form method="post" action="{% url 'pagos:iniciar' orden.pk %}" data-prevent-double-submit>{% csrf_token %}<button class="btn btn-primary" type="submit">Probar pago con Mercado Pago</button></form>{% endif %}
+  <p class="mt-4"><a href="{% url 'pagos:historial' %}">Historial de pagos de prueba</a> ? <a href="{% url 'dashboard' %}">Simulador</a></p>
+</section>
+{% endblock %}
+{% block extra_js %}{% load static %}<script src="{% static 'js/pagos.js' %}" defer></script>{% endblock %}

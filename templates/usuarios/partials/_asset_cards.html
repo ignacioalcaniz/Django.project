@@ -103,10 +103,14 @@
             >
 
             <button type="submit">
-                Comprar simulado
+                Simular inversión
             </button>
         </form>
 
+        <p>
+            <a class="detail-link" href="{% url 'pagos:checkout' activo.id %}">Probar pago con Mercado Pago</a><br>
+            <small>Entorno de prueba; no compra instrumentos financieros reales.</small>
+        </p>
         <form
             method="post"
             action="{% url 'asesorar_activo' activo.id %}"

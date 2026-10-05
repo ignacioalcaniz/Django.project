@@ -182,6 +182,8 @@ class ProductoAdmin(admin.ModelAdmin):
     empty_value_display = "Sin dato"
 
     readonly_fields = (
+        "puntaje_quant",
+        "recomendacion",
         "preview_imagen",
         "estado_sincronizacion",
         "fecha_ultimo_intento_sincronizacion",

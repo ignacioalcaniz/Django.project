@@ -1,0 +1,27 @@
+[Unit]
+Description=QuantEdge Gunicorn
+After=network.target mariadb.service
+Requires=mariadb.service
+
+[Service]
+Type=simple
+User=quantedge
+Group=www-data
+WorkingDirectory=/srv/quantedge/app
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/quantedge/app/.venv/bin/gunicorn QuantEdge.wsgi:application --bind 127.0.0.1:8000 --workers 2 --timeout 60 --access-logfile - --error-logfile -
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+UMask=0027
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

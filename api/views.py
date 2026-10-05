@@ -2,7 +2,10 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework.throttling import ScopedRateThrottle
+from vistaprevia.services.score_sync import QuantEdgeScoreSyncService
 
 from vistaprevia.models import Producto
 from vistaprevia.services.analytics import HistoricalAnalyticsService
@@ -40,7 +43,10 @@ class ProductoViewSet(
     permission_classes = [ProductoPermission]
 
     def get_queryset(self):
-        queryset = Producto.objects.all().order_by("nombre")
+        queryset = Producto.objects.all().order_by(
+            "nombre",
+            "id",
+        )
 
         user = self.request.user
 
@@ -53,27 +59,32 @@ class ProductoViewSet(
 
         return queryset.filter(activo=True)
 
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+
+    def initial(self, request, *args, **kwargs):
+        if request.method == "DELETE":
+            raise MethodNotAllowed("DELETE")
+        super().initial(request, *args, **kwargs)
+
+    def get_throttles(self):
+        if self.action in {"analytics", "score", "historico"}:
+            self.throttle_scope = "quantitative"
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
+
     @staticmethod
-    def _obtener_intervalo_y_limite(request, minimo=1):
+    def _obtener_intervalo_y_limite(request):
         intervalo = request.query_params.get(
             "intervalo",
             "1day",
         )
 
-        try:
-            limite = int(
-                request.query_params.get(
-                    "limite",
-                    100,
-                )
-            )
-        except (TypeError, ValueError):
-            limite = 100
-
-        limite = max(
-            minimo,
-            min(limite, 500),
-        )
+        raw = request.query_params.get("limite", "100")
+        if not raw.isascii() or not raw.isdecimal() or len(raw) > 3:
+            raise ValidationError({"limite": "Debe ser un entero entre 1 y 500."})
+        limite = int(raw)
+        if not 1 <= limite <= 500:
+            raise ValidationError({"limite": "Debe estar entre 1 y 500."})
 
         return intervalo, limite
 
@@ -94,6 +105,9 @@ class ProductoViewSet(
         """
         Devuelve cotizaciones históricas almacenadas
         localmente para el activo seleccionado.
+
+        El histórico puede consultarse utilizando cualquiera
+        de los intervalos soportados por CotizacionHistorica.
         """
 
         activo = self.get_object()
@@ -120,11 +134,11 @@ class ProductoViewSet(
         cotizaciones = (
             activo.cotizaciones_historicas
             .filter(intervalo=intervalo)
-            .order_by("-fecha_hora")[:limite]
+            .order_by("-fecha_hora", "-id")[:limite]
         )
 
         serializer = CotizacionHistoricaSerializer(
-            cotizaciones,
+            list(reversed(list(cotizaciones))),
             many=True,
         )
 
@@ -150,34 +164,33 @@ class ProductoViewSet(
     def analytics(self, request, pk=None):
         """
         Devuelve métricas cuantitativas calculadas
-        desde el histórico almacenado localmente.
+        a partir del histórico diario almacenado localmente.
+
+        QuantEdge Analytics v1 utiliza exclusivamente
+        observaciones con intervalo 1day.
         """
 
         activo = self.get_object()
 
         intervalo, limite = self._obtener_intervalo_y_limite(
             request,
-            minimo=20,
         )
 
-        intervalos_validos = self._intervalos_validos(
-            activo
-        )
-
-        if intervalo not in intervalos_validos:
+        if intervalo != "1day":
             return Response(
                 {
-                    "detail": "Intervalo no válido.",
-                    "intervalos_validos": sorted(
-                        intervalos_validos
+                    "detail": (
+                        "QuantEdge Analytics actualmente "
+                        "soporta únicamente el intervalo 1day."
                     ),
+                    "intervalo_soportado": "1day",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         analytics_service = HistoricalAnalyticsService(
             activo,
-            interval=intervalo,
+            interval="1day",
             limit=limite,
         )
 
@@ -191,24 +204,34 @@ class ProductoViewSet(
                     "nombre": activo.nombre,
                 },
                 "configuracion": {
-                    "intervalo": intervalo,
+                    "intervalo": "1day",
                     "limite": limite,
                     "observaciones": analytics.observations,
                 },
                 "rendimiento": {
-                    "retorno_periodo": analytics.period_return,
+                    "retorno_periodo": (
+                        analytics.period_return
+                    ),
                     "volatilidad_anualizada": (
                         analytics.annualized_volatility
                     ),
-                    "max_drawdown": analytics.max_drawdown,
-                    "maximo_periodo": analytics.period_high,
-                    "minimo_periodo": analytics.period_low,
+                    "max_drawdown": (
+                        analytics.max_drawdown
+                    ),
+                    "maximo_periodo": (
+                        analytics.period_high
+                    ),
+                    "minimo_periodo": (
+                        analytics.period_low
+                    ),
                 },
                 "indicadores": {
                     "sma_20": analytics.sma_20,
                     "sma_50": analytics.sma_50,
                     "rsi_14": analytics.rsi_14,
-                    "volumen_promedio": analytics.average_volume,
+                    "volumen_promedio": (
+                        analytics.average_volume
+                    ),
                 },
                 "tendencia": {
                     "clasificacion": analytics.trend,
@@ -232,39 +255,51 @@ class ProductoViewSet(
     )
     def score(self, request, pk=None):
         """
-        Calcula el score QuantEdge actual sin modificar
-        el score persistido del activo.
+        Calcula el score QuantEdge actual utilizando
+        histórico diario.
+
+        El cálculo no modifica el score persistido
+        del activo.
+
+        QuantEdge Scoring Engine v1 utiliza exclusivamente
+        observaciones con intervalo 1day.
         """
 
         activo = self.get_object()
 
         intervalo, limite = self._obtener_intervalo_y_limite(
             request,
-            minimo=20,
         )
 
-        intervalos_validos = self._intervalos_validos(
-            activo
-        )
-
-        if intervalo not in intervalos_validos:
+        if intervalo != "1day":
             return Response(
                 {
-                    "detail": "Intervalo no válido.",
-                    "intervalos_validos": sorted(
-                        intervalos_validos
+                    "detail": (
+                        "QuantEdge Scoring Engine actualmente "
+                        "soporta únicamente el intervalo 1day."
                     ),
+                    "intervalo_soportado": "1day",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         scoring_engine = QuantEdgeScoringEngine(
             activo,
-            interval=intervalo,
+            interval="1day",
             limit=limite,
         )
 
         resultado = scoring_engine.calculate()
+
+        componentes = [
+            {
+                "nombre": componente.name,
+                "puntaje": componente.score,
+                "puntaje_maximo": componente.max_score,
+                "explicacion": componente.explanation,
+            }
+            for componente in resultado.components
+        ]
 
         return Response(
             {
@@ -274,34 +309,46 @@ class ProductoViewSet(
                     "nombre": activo.nombre,
                 },
                 "configuracion": {
-                    "intervalo": intervalo,
+                    "intervalo": "1day",
                     "limite": limite,
                 },
-               "score_actual": {
-    "puntaje": resultado.rounded_score,
-    "recomendacion": resultado.recommendation,
-    "cobertura_datos": resultado.confidence,
-    "componentes": [
-        {
-            "nombre": componente.name,
-            "puntaje": componente.score,
-            "puntaje_maximo": componente.max_score,
-            "explicacion": componente.explanation,
-        }
-        for componente in resultado.components
-    ],
-},
+                "score_actual": {
+                    "puntaje": resultado.rounded_score,
+                    "recomendacion": (
+                        resultado.recommendation
+                    ),
+                    "cobertura_datos": (
+                        resultado.confidence
+                    ),
+                    "componentes": componentes,
+                },
                 "score_persistido": {
                     "puntaje": activo.puntaje_quant,
-                    "recomendacion": activo.get_recomendacion_display(),
-                    "cobertura_datos": activo.cobertura_datos_quant,
-                    "version": activo.version_score_quant,
-                    "fecha_calculo": activo.fecha_ultimo_score_quant,
+                    "recomendacion": (
+                        activo.get_recomendacion_display()
+                    ),
+                    "cobertura_datos": (
+                        activo.cobertura_datos_quant
+                    ),
+                    "version": (
+                        activo.version_score_quant
+                    ),
+                    "fecha_calculo": (
+                        activo.fecha_ultimo_score_quant
+                    ),
                 },
                 "sincronizado": (
                     activo.fecha_ultimo_score_quant is not None
-                    and resultado.rounded_score
-                    == activo.puntaje_quant
+                    and resultado.recommendation != "Datos insuficientes"
+                    and resultado.rounded_score == activo.puntaje_quant
+                    and QuantEdgeScoreSyncService.RECOMMENDATION_MAP.get(resultado.recommendation) == activo.recomendacion
+                    and round(resultado.confidence) == activo.cobertura_datos_quant
+                    and activo.version_score_quant == QuantEdgeScoreSyncService.SCORE_VERSION
+                    and not activo.cotizaciones_historicas.filter(
+                        intervalo="1day", fecha_creacion__gt=activo.fecha_ultimo_score_quant
+                    ).exists()
+                    and (activo.fecha_ultima_sincronizacion is None
+                         or activo.fecha_ultimo_score_quant >= activo.fecha_ultima_sincronizacion)
                 ),
                 "disclaimer": (
                     "El score QuantEdge es un indicador "
@@ -313,12 +360,16 @@ class ProductoViewSet(
         )
 
 
-class RankingView(APIView):
+class RankingView(GenericAPIView):
     """
     Ranking público de activos calculados por
     QuantEdge Scoring Engine.
+
+    Utiliza exclusivamente scores previamente
+    persistidos en la base de datos.
     """
 
+    serializer_class = ProductoSerializer
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -332,20 +383,17 @@ class RankingView(APIView):
                 "-puntaje_quant",
                 "-cobertura_datos_quant",
                 "nombre",
+                "id",
             )
         )
 
+        page = self.paginate_queryset(activos)
         serializer = ProductoSerializer(
-            activos,
+            page,
             many=True,
             context={
                 "request": request,
             },
         )
 
-        return Response(
-            {
-                "count": activos.count(),
-                "results": serializer.data,
-            }
-        )
+        return self.get_paginated_response(serializer.data)

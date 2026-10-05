@@ -1,3 +1,49 @@
+SEO_PAGES = {
+    "home": (
+        "QuantEdge | Inversión asistida por IA",
+        "Explorá activos financieros, compará indicadores y simulá inversiones con las herramientas de análisis de QuantEdge.",
+    ),
+    "ranking_activos": (
+        "Ranking de activos | QuantEdge",
+        "Consultá el ranking de activos financieros según su puntaje QuantEdge y la cobertura de sus datos cuantitativos.",
+    ),
+    "comparador_activos": (
+        "Comparador de activos | QuantEdge",
+        "Compará activos financieros, sus indicadores, niveles de riesgo y puntajes cuantitativos en QuantEdge.",
+    ),
+    "contacto": (
+        "Contacto | QuantEdge",
+        "Contactá al equipo de QuantEdge para enviar consultas sobre la plataforma y sus herramientas de análisis financiero.",
+    ),
+}
+
+
+def seo(request):
+    """Metadata without database queries; only public content is indexable."""
+    match = request.resolver_match
+    url_name = match.url_name if match else None
+    title, description = SEO_PAGES.get(url_name, (
+        "QuantEdge",
+        "QuantEdge, plataforma de simulación y análisis de inversiones financieras.",
+    ))
+    public_page = (
+        match is not None
+        and not match.namespace
+        and url_name in (*SEO_PAGES, "activo_detalle")
+    )
+    comparison = url_name == "comparador_activos" and any(
+        key in request.GET for key in ("activo_1", "activo_2")
+    )
+    return {
+        "seo_title": title,
+        "seo_description": description,
+        "canonical_url": request.build_absolute_uri(request.path),
+        "seo_robots": "index, follow" if public_page and not comparison else "noindex, follow",
+        "seo_type": "website",
+        "seo_image_url": None,
+    }
+
+
 def admin_metrics(request):
     if not request.path.startswith("/admin"):
         return {}

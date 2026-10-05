@@ -1,4 +1,8 @@
+from html import unescape
+
 from django.shortcuts import render
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from django.views.generic import DetailView
 
 from usuarios.models import ActivoFavorito
@@ -35,6 +39,23 @@ class ActivoDetalleView(DetailView):
         )
 
         activo = self.object
+
+        description = " ".join(strip_tags(unescape(activo.descripcion)).split())
+        if not description:
+            description = (
+                f"Consultá el análisis de {activo.nombre} ({activo.simbolo}), "
+                f"{activo.get_tipo_activo_display()}: indicadores y datos financieros en QuantEdge."
+            )
+        context.update({
+            "seo_title": f"{activo.nombre} ({activo.simbolo}) | QuantEdge",
+            "seo_description": Truncator(description).chars(160),
+            "canonical_url": self.request.build_absolute_uri(activo.get_absolute_url()),
+            "seo_type": "website",
+            "seo_image_url": (
+                self.request.build_absolute_uri(activo.imagen.url)
+                if activo.imagen else None
+            ),
+        })
 
         # ========================================================
         # MÉTRICAS FUNDAMENTALES
