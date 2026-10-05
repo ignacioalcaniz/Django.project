@@ -1,7 +1,7 @@
 [Unit]
 Description=QuantEdge Gunicorn
-After=network.target mariadb.service
-Requires=mariadb.service
+After=network.target mysql.service
+Requires=mysql.service
 
 [Service]
 Type=simple
